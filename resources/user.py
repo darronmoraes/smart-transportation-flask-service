@@ -38,3 +38,44 @@ def register():
             'username': new_user.username
         }
         })
+
+bp = Blueprint("user", __name__, url_prefix="/admin")
+
+"""
+route to get admin as user data
+"""
+# @bp.route("/admin", methods=["GET", "POST"])
+# def user():
+#     users = User.query.all()
+#     admin_list = []
+#     for user in users:
+#         admin_list.append({'id': user.id, 'username': user.username, 'password': user.password, 'created_at': user.created_at})
+#     return jsonify(admin_list)
+
+
+"""
+route to register admin as user
+"""
+@bp.route("/register-admin", methods=["POST"])
+def admin_register():
+    username = request.json.get("username")
+    password = request.json.get("password")
+    existing_user = User.query.filter_by(username = username).first()
+    if existing_user:
+        return jsonify({'message': 'username already registered'}), 400
+    new_user = User(username = username)
+    new_user.set_password(password)
+    db.session.add(new_user)
+    db.session.commit()
+    # create session
+    session = Session(user_id=new_user.id)
+    db.session.add(session)
+    db.session.commit()
+    return jsonify({
+        'message': 'admin registered successfully', 
+        'token': session.token, 
+        'admin': {
+            'id': new_user.id,
+            'username': new_user.username
+        }
+        })
