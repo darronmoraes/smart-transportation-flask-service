@@ -6,6 +6,9 @@ Smart Transportation System Demo Server
         flask_marshmallow
         flask_mysqldb
 
+        incase needed
+        bcrypt
+
         import from flask
         Blueprint
         jsonify
@@ -15,3 +18,10 @@ Smart Transportation System Demo Server
         hashlib
         datetime
         json
+        bcrypt
+
+
+
+        Database
+        timestamp(2)    NULL ON UPDATE CURRENT_TIMESTAMP(2)
+                        CURRENT_TIMESTAMP(2)

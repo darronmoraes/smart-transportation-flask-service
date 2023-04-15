@@ -24,17 +24,19 @@ mysql = MySQL(app)
 
 
 # Schema
-class UserSchema(marshmallow.Schema):
-    class Meta:
-        fields = ('id', 'username', 'password', 'created_at')
+# class UserSchema(marshmallow.Schema):
+#     class Meta:
+#         fields = ('id', 'username', 'password', 'created_at')
 
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
+# user_schema = UserSchema()
+# users_schema = UserSchema(many=True)
 
 # connect db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/sts'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost/sts_test'
 db.init_app(app)
 
+# Secret Key
+# app.config['SECRET_KEY'] = 'smarttransportationsystem2023'
 
 # @app.route('/user/add', methods=['POST'])
 # def add_user():
