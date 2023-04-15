@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 import json
 from models.user import User
 from models.session import Session
@@ -59,10 +59,33 @@ def login():
     if not user or not user.check_password(password):
         return {"status-code": "401",
                 "message": "invalid email or password"}, 401
+
     # create token on login
     session = Session(user_id=user.id)
     db.session.add(session)
     db.session.commit()
+
     return {"status-code": "200",
                 "message": "login successful",
                 "token": session.token}, 200
+
+@bp.route("/logout", methods=["DELETE"])
+def logout():
+
+    # user_token = request.json.get("token")
+    # get the session id from session table
+    # token = session.get('token')
+    token = request.json.get("token")
+
+    # check if the session exists in the database
+    session_obj = Session.query.filter_by(token=token).first()
+    if session_obj:
+        db.session.delete(session_obj)
+        db.session.commit()
+
+    # remove the user_id key from session
+    # session.pop('user_id', None)
+    return {
+        "status-code": "200",
+        "message": "logout successful",
+    }, 200

@@ -35,6 +35,8 @@ mysql = MySQL(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost/sts_test'
 db.init_app(app)
 
+# Secret Key
+# app.config['SECRET_KEY'] = 'smarttransportationsystem2023'
 
 # @app.route('/user/add', methods=['POST'])
 # def add_user():
