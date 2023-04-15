@@ -32,6 +32,7 @@ def register():
     db.session.add(session)
     db.session.commit()
     return jsonify({
+        'error': '200',
         'message': 'user registered successfully', 
         'token': session.token, 
         'user': {

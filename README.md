@@ -19,3 +19,9 @@ Smart Transportation System Demo Server
         datetime
         json
         bcrypt
+
+
+
+        Database
+        timestamp(2)    NULL ON UPDATE CURRENT_TIMESTAMP(2)
+                        CURRENT_TIMESTAMP(2)
