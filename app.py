@@ -32,7 +32,7 @@ user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
 # connect db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/sts'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost/sts'
 db.init_app(app)
 
 
