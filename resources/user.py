@@ -40,3 +40,23 @@ def register():
             'email': new_user.email
         }
         })
+
+
+@bp.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email")
+    password = request.json.get("password")
+    if not email or not password:
+        return {"status-code": "400",
+                "message": "missing email or password"}, 400
+    
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user or not user.check_password(password):
+        return {"status-code": "401",
+                "message": "invalid email or password"}, 401
+    return {"status-code": "200",
+                "message": "login successful"}, 200
