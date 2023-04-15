@@ -44,6 +44,7 @@ def register():
 
 @bp.route("/login", methods=["POST"])
 def login():
+    # empty data check
     email = request.json.get("email")
     password = request.json.get("password")
     if not email or not password:
@@ -54,9 +55,14 @@ def login():
     password = request.json.get("password")
 
     user = User.query.filter_by(email=email).first()
-
+    # check if user credentials are valid
     if not user or not user.check_password(password):
         return {"status-code": "401",
                 "message": "invalid email or password"}, 401
+    # create token on login
+    session = Session(user_id=user.id)
+    db.session.add(session)
+    db.session.commit()
     return {"status-code": "200",
-                "message": "login successful"}, 200
+                "message": "login successful",
+                "token": session.token}, 200
