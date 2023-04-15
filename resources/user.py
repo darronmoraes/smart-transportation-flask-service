@@ -12,18 +12,18 @@ def user():
     users = User.query.all()
     user_list = []
     for user in users:
-        user_list.append({'id': user.id, 'username': user.username, 'password': user.password, 'created_at': user.created_at})
+        user_list.append({'id': user.id, 'email': user.email, 'password': user.password, 'created_at': user.created_at})
     return jsonify(user_list)
 
 @bp.route("/register", methods=["POST"])
 def register():
-    username = request.json.get("username")
+    email = request.json.get("email")
     password = request.json.get("password")
-    existing_user = User.query.filter_by(username = username).first()
+    existing_user = User.query.filter_by(email = email).first()
     if existing_user:
         return jsonify({'error': '400',
-                        'message': 'user ' + existing_user.username + ' already registered'}), 400
-    new_user = User(username = username)
+                        'message': 'user ' + existing_user.email + ' already registered'}), 400
+    new_user = User(email = email)
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
@@ -37,6 +37,6 @@ def register():
         'token': session.token, 
         'user': {
             'id': new_user.id,
-            'username': new_user.username
+            'email': new_user.email
         }
         })
