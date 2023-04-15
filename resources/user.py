@@ -21,7 +21,8 @@ def register():
     password = request.json.get("password")
     existing_user = User.query.filter_by(username = username).first()
     if existing_user:
-        return jsonify({'message': 'username already registered'}), 400
+        return jsonify({'error': '400',
+                        'message': 'user ' + existing_user.username + ' already registered'}), 400
     new_user = User(username = username)
     new_user.set_password(password)
     db.session.add(new_user)
