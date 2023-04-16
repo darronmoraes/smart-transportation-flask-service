@@ -115,10 +115,9 @@ def logout():
 @bp.route("/send_otp", methods=["POST"])
 def send_otp():
     # email = request.json.get("email")
-    email = "gavinrockgomes@gmail.com"
-    otp = generate_otp(
-                    email=email
-    )
+    # email = "gavinrockgomes@gmail.com"
+    email = "dc20-47@ritgoa.ac.in"
+    otp = generate_otp(email=email)
     send_otp_email(
         email_recipient=email,
         # recipient_name=name if user is None else user.name,
@@ -129,10 +128,12 @@ def send_otp():
         'status': '200',
         'message': 'otp sent successfully'})
 
+
+
 @bp.route("/verify_otp", methods=["POST"])
 def verify_otp():
-    email = 'gavinrockgomes@gmail.com'
-    otp = request.json.get("otp")
+    email = request.json.get('email')
+    otp = request.json.get('otp')
     print(email, otp)
 
     verify_otp(recipient_email=email, otp=otp)
