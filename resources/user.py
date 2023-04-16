@@ -19,6 +19,12 @@ def user():
 def register():
     email = request.json.get("email")
     password = request.json.get("password")
+
+    # check if email and password are not empty
+    if not email or not password:
+        return jsonify({'error': '400', 'message': 'email and password are required'}), 400
+    
+    # check if user already exists
     existing_user = User.query.filter_by(email = email).first()
     if existing_user:
         return jsonify({'error': '400',
