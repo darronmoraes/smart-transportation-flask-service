@@ -3,6 +3,7 @@ import json
 from models.user import User
 from models.session import Session
 from db import db
+from utils.email_utils import send_otp_email
 
 
 bp = Blueprint("user", __name__, url_prefix="/user")
@@ -108,3 +109,17 @@ def logout():
         "status": "200",
         "message": "logout successful",
     }, 200
+
+@bp.route("/send_otp", methods=["POST"])
+def send_otp():
+    # email = request.json.get("email")
+    email = "gavinrockgomes@gmail.com"
+    send_otp_email(
+        email_recipient=email,
+        # recipient_name=name if user is None else user.name,
+        recipient_name="Gavin",
+        otp=1234,
+    )
+    return jsonify({
+        'status': '200',
+        'message': 'otp sent successfully'})
