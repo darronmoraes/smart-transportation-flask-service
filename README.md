@@ -1,5 +1,7 @@
 Smart Transportation System Demo Server
 
+        pip freeze > requirements.txt
+
         Required libraries
         flask
         flask_sqlalchemy
