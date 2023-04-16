@@ -1,3 +1,4 @@
-USERNAME_SMTP = "darrontaciomoraes14@gmail.com"
-PASSWORD_SMTP = "December@14"
-SENDER = "darrontaciomoraes14@gmail.com"
+class Config:
+    USERNAME_SMTP = "darrontaciomoraes14@gmail.com"
+    PASSWORD_SMTP = "dxeuyphejstzrjel"
+    SENDER = "darrontaciomoraes14@gmail.com"
