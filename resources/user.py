@@ -114,14 +114,14 @@ def logout():
 
 @bp.route("/send_otp", methods=["POST"])
 def send_otp():
-    # email = request.json.get("email")
+    email = request.json.get("email")
     # email = "gavinrockgomes@gmail.com"
-    email = "dc20-47@ritgoa.ac.in"
+    # email = "dc20-52@ritgoa.ac.in"
     otp = generate_otp(email=email)
     send_otp_email(
         email_recipient=email,
         # recipient_name=name if user is None else user.name,
-        recipient_name="Gavin",
+        recipient_name="Darron",
         otp=otp,
     )
     return jsonify({
@@ -131,15 +131,15 @@ def send_otp():
 
 
 @bp.route("/verify_otp", methods=["POST"])
-def verify_otp():
+def verify_otp_email():
     email = request.json.get('email')
     otp = request.json.get('otp')
     print(email, otp)
 
-    verify_otp(recipient_email=email, otp=otp)
+    verified = verify_otp(email=email, otp=otp)
 
-    # if verified is False:
-    #     return jsonify({'success': False, 'message':'OTP incorrect', 'wrong_otp': True})
+    if verified is False:
+        return jsonify({'success': False, 'message':'OTP incorrect', 'wrong_otp': True})
 
     return jsonify({
         'success': True,

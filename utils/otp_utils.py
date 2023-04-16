@@ -16,8 +16,8 @@ def generate_otp(email):
     return otp
 
 
-def verify_otp(recipient_email, otp):
-    secret = "%s|%s%s" % (recipient_email)
+def verify_otp(email, otp):
+    secret = "%s" % (email)
     secret_base64_encoded = base64.b32encode(secret.encode("utf-8"))
     totp = pyotp.TOTP(secret_base64_encoded, interval=INTERVAL)
     otp_verified = totp.verify(otp, valid_window=VALID_WINDOW)
