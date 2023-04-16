@@ -15,6 +15,7 @@ def user():
         user_list.append({'id': user.id, 'email': user.email, 'password': user.password, 'created_at': user.created_at})
     return jsonify(user_list)
 
+
 @bp.route("/register", methods=["POST"])
 def register():
     email = request.json.get("email")
