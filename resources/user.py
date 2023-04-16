@@ -51,13 +51,13 @@ def register():
 
     # check if email and password are not empty
     if not email or not password:
-        return jsonify({'error': '400', 'message': 'email and password are required'}), 400
+        return jsonify({'status': '400', 'message': 'email and password are required'}), 400
     
     # check if user already exists
     existing_user = User.query.filter_by(email = email).first()
     if existing_user:
         return jsonify({'status': '400',
-                        'message': 'user ' + existing_user.email + ' already registered'}), 400
+                        'message': 'user already registered'}), 400
     new_user = User(email = email)
     new_user.set_password(password)
     db.session.add(new_user)
@@ -135,6 +135,8 @@ def send_otp():
         'message': 'otp sent successfully'})
 
 
+# init dict to store verified emails and their OTP status
+verified_emails = {}
 
 @bp.route("/verify_otp", methods=["POST"])
 def verify_otp_email():
@@ -142,10 +144,19 @@ def verify_otp_email():
     otp = request.json.get('otp')
     print(email, otp)
 
+    # check if email is already verified
+    if email in verified_emails:
+        if verified_emails[email] == True:
+            return jsonify({'success': False, 'message':'Email already verified', 'wrong_otp': False})
+
+    # verify the OTP
     verified = verify_otp(email=email, otp=otp)
 
     if verified is False:
         return jsonify({'success': False, 'message':'OTP incorrect', 'wrong_otp': True})
+    
+    # mark the email as verified
+    verified_emails[email] = True
 
     return jsonify({
         'success': True,
