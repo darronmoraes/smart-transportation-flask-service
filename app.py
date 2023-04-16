@@ -3,6 +3,7 @@ from db import db
 from flask import Flask, jsonify, request
 from flask_mysqldb import MySQL
 from flask_marshmallow import Marshmallow
+from flask_cors import CORS
 
 from resources.user import bp as UserBluprint
 
@@ -10,6 +11,8 @@ app = Flask(__name__)
 
 marshmallow = Marshmallow()
 mysql = MySQL(app)
+
+CORS(app)
 
 # # User class
 # class User(db.Model):
@@ -61,4 +64,7 @@ app.register_blueprint(UserBluprint)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    # app.run(host='192.168.0.112', debug=True)
+    # run on all ip addresses
+    app.run(host='0.0.0.0', debug=True)
