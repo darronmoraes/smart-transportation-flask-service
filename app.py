@@ -3,6 +3,7 @@ from db import db
 from flask import Flask, jsonify, request
 from flask_mysqldb import MySQL
 from flask_marshmallow import Marshmallow
+from flask_cors import CORS
 
 from resources.user import bp as UserBluprint
 
@@ -10,6 +11,8 @@ app = Flask(__name__)
 
 marshmallow = Marshmallow()
 mysql = MySQL(app)
+
+CORS(app)
 
 # # User class
 # class User(db.Model):
