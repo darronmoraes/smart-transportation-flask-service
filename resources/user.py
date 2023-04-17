@@ -18,31 +18,6 @@ def user():
         user_list.append({'id': user.id, 'email': user.email, 'password': user.password, 'created_at': user.created_at})
     return jsonify(user_list)
 
-# @bp.route("/register", methods=["POST"])
-# def register():
-#     email = request.json.get("email")
-#     password = request.json.get("password")
-#     existing_user = User.query.filter_by(email = email).first()
-#     if existing_user:
-#         return jsonify({'status': '400',
-#                         'message': 'user ' + existing_user.email + ' already registered'}), 400
-#     new_user = User(email = email)
-#     new_user.set_password(password)
-#     db.session.add(new_user)
-#     db.session.commit()
-#     # create session
-#     session = Session(user_id=new_user.id)
-#     db.session.add(session)
-#     db.session.commit()
-#     return jsonify({
-#         'status': '200',
-#         'message': 'user registered successfully', 
-#         'token': session.token, 
-#         'user': {
-#             'id': new_user.id,
-#             'email': new_user.email
-#         }
-#         })
 
 @bp.route("/register", methods=["POST"])
 def register():
@@ -51,24 +26,34 @@ def register():
 
     # check if email and password are not empty
     if not email or not password:
-        return jsonify({'status': '400', 'message': 'email and password are required'}), 400
+        return jsonify({'status': 400,
+                        'message': 'email and password are required'}), 400
     
     # check if user already exists
     existing_user = User.query.filter_by(email = email).first()
     if existing_user:
-        return jsonify({'status': '400',
+        return jsonify({'status': 400,
                         'message': 'user already registered'}), 400
+    
+    # create new user
     new_user = User(email = email)
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
+
     # create session
     session = Session(user_id=new_user.id)
     db.session.add(session)
     db.session.commit()
+
+    # return registration success
     return jsonify({
-        'status': '200',
-        'message': 'user registered successfully'})
+        'success': True,
+        'message': 'user registered successfully',
+        'status': 200,
+        'token': session.token,
+        'userId': new_user.id,
+        'email': new_user.email })
 
 @bp.route("/login", methods=["POST"])
 def login():
