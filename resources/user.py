@@ -18,8 +18,6 @@ def user():
         user_list.append({'id': user.id, 'email': user.email, 'password': user.password, 'created_at': user.created_at})
     return jsonify(user_list)
 
-<<<<<<< HEAD
-=======
 # @bp.route("/register", methods=["POST"])
 # def register():
 #     email = request.json.get("email")
@@ -45,7 +43,6 @@ def user():
 #             'email': new_user.email
 #         }
 #         })
->>>>>>> otp-reg
 
 @bp.route("/register", methods=["POST"])
 def register():
