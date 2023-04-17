@@ -38,7 +38,7 @@ def user():
 #         'status': '200',
 #         'message': 'user registered successfully', 
 #         'token': session.token, 
-#         'user': {
+#         'user': {git 
 #             'id': new_user.id,
 #             'email': new_user.email
 #         }
