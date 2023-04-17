@@ -26,14 +26,18 @@ def register():
 
     # check if email and password are not empty
     if not email or not password:
-        return jsonify({'status': 400,
-                        'message': 'email and password are required'}), 400
+        return jsonify({
+            'success': False,
+            'message': 'email and password are required',
+            'status': 400}), 400
     
     # check if user already exists
     existing_user = User.query.filter_by(email = email).first()
     if existing_user:
-        return jsonify({'status': 400,
-                        'message': 'user already registered'}), 400
+        return jsonify({
+            'success': False,
+            'message': 'user already registered',
+            'status': 400}), 400
     
     # create new user
     new_user = User(email = email)
@@ -53,7 +57,7 @@ def register():
         'status': 200,
         'token': session.token,
         'userId': new_user.id,
-        'email': new_user.email })
+        'email': new_user.email }), 200
 
 @bp.route("/login", methods=["POST"])
 def login():
