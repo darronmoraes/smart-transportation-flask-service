@@ -116,7 +116,7 @@ def send_otp():
     send_otp_email(
         email_recipient=email,
         # recipient_name=name if user is None else user.name,
-        recipient_name="Darron",
+        recipient_name=email,
         otp=otp,
     )
     return jsonify({
@@ -136,13 +136,13 @@ def verify_otp_email():
     # check if email is already verified
     if email in verified_emails:
         if verified_emails[email] == True:
-            return jsonify({'success': False, 'message':'Email already verified', 'wrong_otp': False})
+            return jsonify({'success': False, 'message':'Email already verified', 'wrong_otp': False, 'status': 400}), 400
 
     # verify the OTP
     verified = verify_otp(email=email, otp=otp)
 
     if verified is False:
-        return jsonify({'success': False, 'message':'OTP incorrect', 'wrong_otp': True})
+        return jsonify({'success': False, 'message':'OTP incorrect', 'wrong_otp': True, 'status': 400}), 400
     
     # mark the email as verified
     verified_emails[email] = True
@@ -150,4 +150,4 @@ def verify_otp_email():
     return jsonify({
         'success': True,
         'message': 'otp correct',
-        'status': 200})
+        'status': 200}), 200
