@@ -76,6 +76,10 @@ def login():
     if not user or not user.check_password(password):
         return {"status": "401",
                 "message": "invalid email or password"}, 401
+    
+    # if not user or not user.password:
+    #     return {"status": "401",
+    #             "message": "invalid email or password"}, 401
 
     # create token on login
     session = Session(user_id=user.id)
