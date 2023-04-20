@@ -55,9 +55,9 @@ def register():
         'success': True,
         'message': 'user registered successfully',
         'status': 200,
-        'token': session.token,
-        'userId': new_user.id,
-        'email': new_user.email }), 200
+        'user': {'token': session.token,
+                'userId': new_user.id,
+                'email': new_user.email}}), 200
 
 @bp.route("/login", methods=["POST"])
 def login():
