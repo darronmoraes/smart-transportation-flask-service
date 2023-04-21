@@ -55,9 +55,9 @@ def register():
         'success': True,
         'message': 'user registered successfully',
         'status': 200,
-        'token': session.token,
-        'userId': new_user.id,
-        'email': new_user.email }), 200
+        'user': {'token': session.token,
+                'userId': new_user.id,
+                'email': new_user.email}}), 200
 
 @bp.route("/login", methods=["POST"])
 def login():
@@ -76,6 +76,10 @@ def login():
     if not user or not user.check_password(password):
         return {"status": "401",
                 "message": "invalid email or password"}, 401
+    
+    # if not user or not user.password:
+    #     return {"status": "401",
+    #             "message": "invalid email or password"}, 401
 
     # create token on login
     session = Session(user_id=user.id)
@@ -85,6 +89,7 @@ def login():
     return {"status": "200",
                 "message": "login successful",
                 "token": session.token}, 200
+
 
 @bp.route("/logout", methods=["DELETE"])
 def logout():

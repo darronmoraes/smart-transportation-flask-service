@@ -1,7 +1,9 @@
 from datetime import datetime
 from db import db
-from models.user import User
+
 import hashlib
+
+from models.user import User
 
 
 class Session(db.Model):

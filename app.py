@@ -6,6 +6,8 @@ from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 
 from resources.user import bp as UserBluprint
+from resources.passenger import bp as PassengerBluprint
+from resources.employee import bp as EmployeeBluprint
 
 app = Flask(__name__)
 
@@ -61,6 +63,8 @@ db.init_app(app)
 
 
 app.register_blueprint(UserBluprint)
+app.register_blueprint(PassengerBluprint)
+app.register_blueprint(EmployeeBluprint)
 
 
 if __name__ == '__main__':
