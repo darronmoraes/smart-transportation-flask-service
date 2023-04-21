@@ -12,6 +12,7 @@ class User(db.Model):
     password = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+
     def set_password(self, password):
         salt = bcrypt.gensalt()
         self.password = bcrypt.hashpw(password.encode('utf-8'), salt)

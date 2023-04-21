@@ -179,11 +179,16 @@ def login():
     db.session.add(session)
     db.session.commit()
 
+    employee = Employee.query.filter(Employee.user_id == user.id).first()
+
     return {'status': 200,
             'message': 'login successful',
             'user': {
                     'token': session.token,
-                    'userId': user.id}}, 200
+                    'userId': user.id,
+                    'email': user.email,
+                    'firstname': employee.firstname,
+                    'lastname': employee.lastname}}, 200
 
 
 @bp.route("/logout", methods=["DELETE"])
@@ -202,3 +207,28 @@ def logout():
         "message": "logout successful",
         "success": True
     }, 200
+
+
+
+@bp.route("/drivers", methods=["GET", "POST"])
+@auth_admin_middleware
+def get_all_drivers():
+    # query to join employee and driver to get all details of driver
+    employees = Employee.query.join(Driver, Employee.driver_id == Driver.id).all()
+    employees_list = []
+
+    for employee in employees:
+        # check if employee role is of type driver
+        if employee.role == "driver" and employee.driver_id is not None:
+            employees_list.append({
+                'empId': employee.id,
+                'user': {
+                    'firstname': employee.firstname,
+                    'lastname': employee.lastname, 
+                    'userId': employee.user_id, 
+                    'contact': employee.contact,
+                    'gender': employee.gender,
+                    'employeeNo': employee.employee_no,
+                    'licenseNo': employee.driver.license_no}})
+            
+    return jsonify(employees_list)
