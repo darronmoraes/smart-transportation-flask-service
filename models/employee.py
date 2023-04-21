@@ -16,3 +16,4 @@ class Employee(db.Model):
     employee_no = db.Column(db.String(10), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey(Driver.id), nullable=False)
+    driver = db.relationship('Driver', backref='employee', uselist=False)
