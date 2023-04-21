@@ -179,11 +179,16 @@ def login():
     db.session.add(session)
     db.session.commit()
 
+    employee = Employee.query.filter(Employee.user_id == user.id).first()
+
     return {'status': 200,
             'message': 'login successful',
             'user': {
                     'token': session.token,
-                    'userId': user.id}}, 200
+                    'userId': user.id,
+                    'email': user.email,
+                    'firstname': employee.firstname,
+                    'lastname': employee.lastname}}, 200
 
 
 @bp.route("/logout", methods=["DELETE"])
