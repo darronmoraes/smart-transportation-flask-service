@@ -90,6 +90,7 @@ def login():
                 "message": "login successful",
                 "token": session.token}, 200
 
+
 @bp.route("/logout", methods=["DELETE"])
 def logout():
 

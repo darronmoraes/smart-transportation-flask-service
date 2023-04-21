@@ -6,6 +6,7 @@ from db import db
 from models.employee import Employee
 from models.driver import Driver
 from models.user import User
+from models.session import Session
 
 from middleware.auth import auth_admin_middleware
 
@@ -22,7 +23,65 @@ def get_employee():
     return jsonify(employees_list)
 
 
+# route to register admin as employee
+@bp.route("/register-admin", methods=["POST"])
+def create_admin():
+    # required to create admin
+    firstname = request.json.get("firstname")
+    lastname = request.json.get("lastname")
+    contact = request.json.get("contact")
+    gender = request.json.get("gender")
+    role = request.json.get("role")
+    employee_no = request.json.get("employeeNo")
 
+    # required to create employee-credentials
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    # check if email and password are empty
+    if not email or not password:
+        return jsonify({
+            'success': False,
+            'message': 'email and password are required',
+            'status': 400}), 400
+
+    # check if firstname or lastname or license-no fields are empty
+    if not firstname or not lastname or not role:
+        return jsonify({
+            'success': False,
+            'message': 'firstname, lastname and role are required',
+            'status': 400}), 400
+    
+    # check if admin already exists
+    existing_admin = User.query.filter_by(email = email).first()
+    if existing_admin:
+        return jsonify({
+            'success': False,
+            'message': 'admin already registered',
+            'status': 400}), 400
+    
+    # create new user-employee-driver
+    new_admin_user = User(email=email)
+    new_admin_user.set_password(password)
+    db.session.add(new_admin_user)
+    db.session.commit()
+    # create admin
+    employee = Employee(firstname=firstname, lastname=lastname, contact=contact, gender=gender, role=role, employee_no= employee_no, user_id=new_admin_user.id)
+    db.session.add(employee)
+    db.session.commit()
+
+    # return added-details success
+    return jsonify({
+        'success': True,
+        'message': 'employee details registered successfully',
+        'status': 200,
+        'user-driver': {'firstname': employee.firstname,
+                        'lastname': employee.lastname,
+                        'userId': new_admin_user.id,
+                        'employeeId': employee.id}}), 200
+
+
+# route to register driver as employee
 @bp.route("/register-driver", methods=["POST"])
 @auth_admin_middleware
 def add_passenger_details():
@@ -86,3 +145,60 @@ def add_passenger_details():
                         'lastname': employee.lastname,
                         'userId': new_driver_user.id,
                         'driverId': driver.id}}), 200
+
+
+# route to login as admin
+@bp.route("/admin-login", methods=["POST"])
+def login():
+    # request
+    email = request.json.get("email")
+    password = request.json.get("password")
+    ip_address = request.json.get("ipaddress")
+    # role = request.json.get("role")
+
+    # empty data check
+    if not email or not password:
+        return {"status": 400,
+                "message": "missing email or password"}, 400
+    
+    # checks if not admin
+    # employee = Employee.query.filter(Employee.user_id == User.id).first()
+    # if not employee.role == role:
+    #     return jsonify({"status": 400,
+    #                     "message": "role type not applicable for login",
+    #                     "success": False}), 400
+
+    user = User.query.filter_by(email=email).first()
+    # check if user credentials are valid
+    if not user or not user.check_password(password):
+        return {"status": 401,
+                "message": "invalid email or password"}, 401
+
+    # create token on login
+    session = Session(user_id=user.id, ip_address=ip_address)
+    db.session.add(session)
+    db.session.commit()
+
+    return {'status': 200,
+            'message': 'login successful',
+            'user': {
+                    'token': session.token,
+                    'userId': user.id}}, 200
+
+
+@bp.route("/logout", methods=["DELETE"])
+def logout():
+    # request user session token
+    token = request.json.get("token")
+
+    # check if the session exists in the database
+    session_obj = Session.query.filter_by(token=token).first()
+    if session_obj:
+        db.session.delete(session_obj)
+        db.session.commit()
+
+    return {
+        "status": 200,
+        "message": "logout successful",
+        "success": True
+    }, 200
