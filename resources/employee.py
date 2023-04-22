@@ -73,9 +73,9 @@ def create_admin():
     # return added-details success
     return jsonify({
         'success': True,
-        'message': 'employee details registered successfully',
+        'message': 'employee admin details registered successfully',
         'status': 200,
-        'user-driver': {'firstname': employee.firstname,
+        'user-admin': {'firstname': employee.firstname,
                         'lastname': employee.lastname,
                         'userId': new_admin_user.id,
                         'employeeId': employee.id}}), 200
@@ -99,6 +99,12 @@ def add_passenger_details():
     # required to populate user-driver-credentials
     email = request.json.get("email")
     password = request.json.get("password")
+
+    if not license_no:
+        return jsonify({
+            'success': False,
+            'message': 'license number required to register driver',
+            'status': 400}), 400
 
     # check if email and password are empty
     if not email or not password:
