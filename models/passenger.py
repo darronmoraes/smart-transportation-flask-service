@@ -14,5 +14,5 @@ class Passenger(db.Model):
     category = db.Column(db.String(45), nullable=False)
     gender = db.Column(db.String(6), nullable=False)
     dob = db.Column(db.DateTime, nullable=False)
-    photo = db.Column(db.String)
+    photo = db.Column(db.String(150))
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
