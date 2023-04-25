@@ -74,4 +74,5 @@ if __name__ == '__main__':
     # app.run(debug=True)
     # app.run(host='192.168.0.112', debug=True)
     # run on all ip addresses
-    app.run(host='0.0.0.0', debug=True)
+    # app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=5000)
