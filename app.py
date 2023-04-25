@@ -8,6 +8,7 @@ from flask_cors import CORS
 from resources.user import bp as UserBluprint
 from resources.passenger import bp as PassengerBluprint
 from resources.employee import bp as EmployeeBluprint
+from resources.schedule import bp as ScheduleBluprint
 
 app = Flask(__name__)
 
@@ -65,6 +66,8 @@ db.init_app(app)
 app.register_blueprint(UserBluprint)
 app.register_blueprint(PassengerBluprint)
 app.register_blueprint(EmployeeBluprint)
+app.register_blueprint(ScheduleBluprint)
+
 
 
 if __name__ == '__main__':
