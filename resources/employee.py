@@ -120,6 +120,12 @@ def add_passenger_details():
             'message': 'firstname, lastname and contact are required',
             'status': 400}), 400
     
+    if not role:
+        return jsonify({
+            'success': False,
+            'message': 'driver as role is required',
+            'status': 405}), 400
+    
     # check if driver already exists
     existing_driver = User.query.filter_by(email = email).first()
     if existing_driver:
@@ -127,6 +133,7 @@ def add_passenger_details():
             'success': False,
             'message': 'driver already registered',
             'status': 400}), 400
+    
     
     if role == "driver":
         # create new user-employee-driver
@@ -149,6 +156,7 @@ def add_passenger_details():
         'status': 200,
         'user-driver': {'firstname': employee.firstname,
                         'lastname': employee.lastname,
+                        'empId': employee.id,
                         'userId': new_driver_user.id,
                         'driverId': driver.id}}), 200
 
