@@ -3,7 +3,6 @@ from db import db
 
 from models.route import Route
 from models.source import Source
-from models.destination import Destination
 from models.route_info import RouteInfo
 
 
@@ -106,43 +105,58 @@ def add_source():
 
 
 
-@bp.route("/add-destination", methods=["POST"])
-def add_destination():
+@bp.route("/add-route-info", methods=["POST"])
+def create_dynamic_routes():
     # get source and destination
-    name = request.json.get("name")
-    longitude = request.json.get("longitude")
-    latitude = request.json.get("latitude")
+    route_source = request.json.get("stand-name")
+    source_name = request.json.get("source-name")
+    destination_name = request.json.get("destination-name")
+    distance = request.json.get("distance")
+    fare = request.json.get("fare")
 
-    if not longitude or not latitude:
+
+    # required route source name
+    if not route_source:
         return jsonify({
             'success': False,
-            'message': 'longitutde and destination are required to create a destination',
+            'message': 'route source name not provided',
             'status': 400}), 400
     
-    if not name:
+    # required source name
+    if not source_name:
         return jsonify({
             'success': False,
-            'message': 'destination name is required to create a destination',
+            'message': 'source name is required to create a routeinfo',
             'status': 400}), 400
     
-    existing_destination = Destination.query.filter_by(name=name).first()
-    if existing_destination:
+    # check if route with source name exists
+    exisiting_route_info = db.session.query(Source)\
+        .join(RouteInfo, Source.id == RouteInfo.source_id)\
+        .filter(Source.name == source_name).first()
+    if exisiting_route_info:
         return jsonify({
             'success': False,
-            'message': 'destination already exists',
+            'message': 'route info already exists',
             'status': 400}), 400
     
-    # create new route
-    new_destination = Destination(name=name, longitude=longitude, latitude=latitude)
-    db.session.add(new_destination)
-    db.session.commit()
+    # to get the route id
+    route = Route.query.filter_by(source_stand=route_source).first()
+    # to get the source id
+    source = Source.query.filter_by(name=source_name).first()
+    if route and source:
+        # route_info = RouteInfo.query.filter_by(route_id=route.id).first()
+        # create new route
+        new_route_info = RouteInfo(route_id=route.id, source_id=source.id, destination=destination_name, distance=distance, fare=fare)
+        db.session.add(new_route_info)
+        db.session.commit()
 
     # return route added successfully
     return jsonify({
         'success': True,
-        'message': 'destination added successfully',
+        'message': 'route info added successfully',
         'status': 200,
-        'user-admin': {'destination-id': new_destination.id,
-                        'destination-name': new_destination.name,
-                        'long': new_destination.longitude,
-                        'lat': new_destination.latitude}}), 200
+        'route info': {'route-id': new_route_info.route.id,
+                        'source-name': new_route_info.source.id,
+                        'destination-name': new_route_info.destination,
+                        'distance': new_route_info.distance,
+                        'fare': new_route_info.fare}}), 200
