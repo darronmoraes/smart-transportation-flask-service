@@ -16,3 +16,5 @@ class Session(db.Model):
     ).hexdigest())
     start_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     ip_address = db.Column(db.String(100), nullable=True)
+
+    user = db.relationship('User', backref='session', uselist=False)

@@ -4,6 +4,7 @@ from models.user import User
 from models.passenger import Passenger
 from db import db
 
+from middleware.auth import auth_middleware
 
 bp = Blueprint("passenger", __name__, url_prefix="/user")
 
@@ -20,6 +21,7 @@ def get_passengers():
 
 
 @bp.route("/add-passenger-details", methods=["POST"])
+@auth_middleware
 def add_details():
     firstname = request.json.get("firstname")
     lastname = request.json.get("lastname")
