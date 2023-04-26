@@ -129,8 +129,8 @@ def send_otp():
         'message': 'otp sent successfully'})
 
 
-# init dict to store verified emails and their OTP status
-verified_emails = {}
+# # init dict to store verified emails and their OTP status
+# verified_emails = {}
 
 @bp.route("/verify_otp", methods=["POST"])
 def verify_otp_email():
@@ -138,10 +138,10 @@ def verify_otp_email():
     otp = request.json.get('otp')
     print(email, otp)
 
-    # check if email is already verified
-    if email in verified_emails:
-        if verified_emails[email] == True:
-            return jsonify({'success': False, 'message':'Email already verified', 'wrong_otp': False, 'status': 400}), 400
+    # # check if email is already verified
+    # if email in verified_emails:
+    #     if verified_emails[email] == True:
+    #         return jsonify({'success': False, 'message':'Email already verified', 'wrong_otp': False, 'status': 400}), 400
 
     # verify the OTP
     verified = verify_otp(email=email, otp=otp)
@@ -149,8 +149,8 @@ def verify_otp_email():
     if verified is False:
         return jsonify({'success': False, 'message':'OTP incorrect', 'wrong_otp': True, 'status': 400}), 400
     
-    # mark the email as verified
-    verified_emails[email] = True
+    # # mark the email as verified
+    # verified_emails[email] = True
 
     return jsonify({
         'success': True,
