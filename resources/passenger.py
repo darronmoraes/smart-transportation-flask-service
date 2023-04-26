@@ -48,5 +48,11 @@ def add_details():
         'success': True,
         'message': 'passenger details registered successfully',
         'status': 200,
-        'firstname': passenger.firstname,
-        'lastname': passenger.lastname }), 200
+        'user': {
+            'firstname': passenger.firstname,
+            'lastname': passenger.lastname,
+            'contact': passenger.contact,
+            'address': passenger.address,
+            'category': passenger.category,
+            'gender': passenger.gender,
+            'dob': passenger.dob}}), 200
