@@ -20,7 +20,7 @@ def get_routes():
         routes_list.append({
             "route-id": route.route_id,
             "source-id": route.source_id,
-            "destination-id": route.destination_id,
+            "destination": route.destination,
             "distance": route.distance,
             "fare": route.fare
         })
