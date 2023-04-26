@@ -235,14 +235,13 @@ def get_all_drivers():
         # check if employee role is of type driver
         if employee.role == "driver" and employee.driver_id is not None:
             employees_list.append({
-                'empId': employee.id,
-                'user': {
-                    'firstname': employee.firstname,
-                    'lastname': employee.lastname, 
-                    'userId': employee.user_id, 
-                    'contact': employee.contact,
-                    'gender': employee.gender,
-                    'employeeNo': employee.employee_no,
-                    'licenseNo': employee.driver.license_no}})
+                        'firstname': employee.firstname,
+                        'lastname': employee.lastname, 
+                        'empId': employee.id, 
+                        'contact': employee.contact,
+                        'gender': employee.gender,
+                        'employeeNo': employee.employee_no,
+                        'licenseNo': employee.driver.license_no
+                            })
             
-    return jsonify(employees_list)
+    return jsonify({'status': 200, 'employee': employees_list})
