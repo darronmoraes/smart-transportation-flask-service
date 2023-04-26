@@ -87,8 +87,12 @@ def login():
     db.session.commit()
 
     return {"status": "200",
-                "message": "login successful",
-                "token": session.token}, 200
+            "message": "login successful",
+            "user": {
+                "token": session.token,
+                "userId": user.id,
+                "email": user.email
+            }}, 200
 
 
 @bp.route("/logout", methods=["DELETE"])
