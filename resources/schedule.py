@@ -1,9 +1,12 @@
 from flask import Blueprint, jsonify, request
 from db import db
 
+import datetime
+
 from models.route import Route
 from models.source import Source
 from models.route_info import RouteInfo
+from models.schedule import Schedule
 
 
 
@@ -160,3 +163,51 @@ def create_dynamic_routes():
                         'destination-name': new_route_info.destination,
                         'distance': new_route_info.distance,
                         'fare': new_route_info.fare}}), 200
+
+
+
+@bp.route("/add-schedule", methods=["POST"])
+def create_schedule():
+    # get departure and  arrival time and duration with route-id 
+    departure_at_str = request.json.get("departure-at")
+    arrival_at_str = request.json.get("arrival-at")
+    duration = request.json.get("duration")
+    route_id = request.json.get("route-id")
+
+    # convert string to time type
+    departure_at = datetime.datetime.strptime(departure_at_str, '%H:%M').time()
+    arrival_at = datetime.datetime.strptime(arrival_at_str, '%H:%M').time()
+
+    # required route source name
+    if not departure_at and not arrival_at:
+        return jsonify({
+            'success': False,
+            'message': 'departure and arrival time are required',
+            'status': 400}), 400
+    
+    # check if route with source name exists
+    exisiting_schedule = Schedule.query.filter(Schedule.departure_at==departure_at, Schedule.route_id==route_id).first()
+    if exisiting_schedule:
+        return jsonify({
+            'success': False,
+            'message': 'schedule already exists',
+            'status': 400}), 400
+    
+    
+    # create a new schedule if it doesn't exist
+    new_schedule = Schedule(departure_at=departure_at, arrival_at=arrival_at, duration=duration, route_id=route_id)
+    db.session.add(new_schedule)
+    db.session.commit()
+
+    departure = new_schedule.departure_at.strftime('%H:%M')
+    arrival = new_schedule.arrival_at.strftime('%H:%M')
+
+    # return route added successfully
+    return jsonify({
+        'success': True,
+        'message': 'schedule info added successfully',
+        'status': 200,
+        'schedule': {'schedule-id': new_schedule.id,
+                     'departure-time': departure,
+                     'arrival-time': arrival,
+                     'duration': new_schedule.duration,}}), 200
