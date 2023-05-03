@@ -1,7 +1,7 @@
 from db import db
 
-class Source(db.Model):
-    __tablename__ = 'source'
+class Halts(db.Model):
+    __tablename__ = 'halts'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(45), nullable=False)

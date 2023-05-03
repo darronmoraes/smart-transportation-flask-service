@@ -1,10 +1,14 @@
 from flask import Blueprint, jsonify, request, session
+from datetime import datetime
 import json
 
 from db import db
 
 from models.bus import Bus
 from models.bus_schedules import BusSchedules
+from models.route_info import RouteInfo
+from models.route import Route
+from models.halts import Halts
 
 
 bp = Blueprint("bus", __name__, url_prefix="/bus")
@@ -99,3 +103,68 @@ def get_bus_schedule():
     for bus in bus_schedule:
         bus_schedule_list.append({'bus-id': bus.bus_id, 'schedule-id': bus.schedule_id, 'available-seats': bus.available_seats, 'date': bus.date})
     return jsonify({'bus': bus_schedule_list})
+
+
+@bp.route("/bus-available", methods=["GET"])
+def bus_available_search():
+    source_id = request.args.get('source')
+    destination_id = request.args.get('destination')
+    date_str = request.args.get('date')
+
+    # convert date
+    date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+
+    # query route-info model to find the route between source and destination
+    route_query = db.session.query(Halts, RouteInfo).\
+    join(RouteInfo, RouteInfo.source_id == Halts.id).\
+    filter(RouteInfo.source_id == source_id, RouteInfo.destination_id == destination_id)
+
+    route_info = route_query.first()
+
+    # query bus-schedule model to find th available date
+    bus_schedule = BusSchedules.query.filter(BusSchedules.date==date).first()
+
+    if bus_schedule is None:
+        return jsonify({
+            'success': False,
+            'message': 'no buses available on this route for the specific date',
+            'status': 400}), 400
+    
+
+    # get the route information from the schedule
+    route_stand = bus_schedule.schedule.route
+    # get the source and destination stands from the route info
+    source_stand = route_stand.source_stand
+    destination_stand = route_stand.destination_stand
+
+    # query halts table to get source and destination names
+    source_halt = Halts.query.get(source_id)
+    destination_halt = Halts.query.get(destination_id)
+    
+
+    return jsonify({
+        'success': True,
+        'status': 200,
+        'results': {
+            'schedule': {
+                'id': bus_schedule.id,
+                'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
+                'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
+                'duration': bus_schedule.schedule.duration,
+                'departure-stand': source_stand,
+                'arrival-stand': destination_stand,
+                'date': bus_schedule.date.strftime('%Y-%m-%d'),
+                'seats-available': bus_schedule.available_seats
+            },
+            'bus': {
+                'id': bus_schedule.bus.id,
+                'reg-no': bus_schedule.bus.reg_no,
+                'type': bus_schedule.bus.type
+            },
+            'ticket': {
+                'source': source_halt.name,
+                'destination': destination_halt.name,
+                'fare': route_info.RouteInfo.fare
+            }
+        }}), 200
