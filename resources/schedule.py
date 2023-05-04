@@ -4,7 +4,7 @@ from db import db
 import datetime
 
 from models.route import Route
-from models.source import Source
+from models.halts import Halts
 from models.route_info import RouteInfo
 from models.schedule import Schedule
 
@@ -23,7 +23,7 @@ def get_routes():
         routes_list.append({
             "route-id": route.route_id,
             "source-id": route.source_id,
-            "destination": route.destination,
+            "destination": route.destination_id,
             "distance": route.distance,
             "fare": route.fare
         })
@@ -65,8 +65,8 @@ def add_route():
 
 
 
-@bp.route("/add-source", methods=["POST"])
-def add_source():
+@bp.route("/add-halt", methods=["POST"])
+def add_halt():
     # get source and destination
     name = request.json.get("name")
     longitude = request.json.get("longitude")
@@ -84,7 +84,7 @@ def add_source():
             'message': 'source name is required to create a source',
             'status': 400}), 400
     
-    existing_source = Source.query.filter_by(name=name).first()
+    existing_source = Halts.query.filter_by(name=name).first()
     if existing_source:
         return jsonify({
             'success': False,
@@ -92,7 +92,7 @@ def add_source():
             'status': 400}), 400
     
     # create new route
-    new_source = Source(name=name, longitude=longitude, latitude=latitude)
+    new_source = Halts(name=name, longitude=longitude, latitude=latitude)
     db.session.add(new_source)
     db.session.commit()
 
@@ -111,9 +111,9 @@ def add_source():
 @bp.route("/add-route-info", methods=["POST"])
 def create_dynamic_routes():
     # get source and destination
-    route_source = request.json.get("stand-name")
-    source_name = request.json.get("source-name")
-    destination_name = request.json.get("destination-name")
+    route_source = request.json.get("stand-source-id")
+    source_id = request.json.get("source-id")
+    destination_id = request.json.get("destination-id")
     distance = request.json.get("distance")
     fare = request.json.get("fare")
 
@@ -126,30 +126,36 @@ def create_dynamic_routes():
             'status': 400}), 400
     
     # required source name
-    if not source_name:
+    if not source_id:
         return jsonify({
             'success': False,
-            'message': 'source name is required to create a routeinfo',
+            'message': 'source-id is required to create a routeinfo',
+            'status': 400}), 400
+    
+    if not destination_id:
+        return jsonify({
+            'success': False,
+            'message': 'destination-id is required to create a routeinfo',
             'status': 400}), 400
     
     # check if route with source name exists
-    exisiting_route_info = db.session.query(Source)\
-        .join(RouteInfo, Source.id == RouteInfo.source_id)\
-        .filter(Source.name == source_name).first()
+    exisiting_route_info = db.session.query(Halts)\
+        .join(RouteInfo, Halts.id == RouteInfo.source_id)\
+        .filter(Halts.name == source_id).first()
     if exisiting_route_info:
         return jsonify({
             'success': False,
             'message': 'route info already exists',
             'status': 400}), 400
     
-    # to get the route id
-    route = Route.query.filter_by(source_stand=route_source).first()
-    # to get the source id
-    source = Source.query.filter_by(name=source_name).first()
-    if route and source:
+    # # to get the route id
+    # route = Route.query.filter_by(source_stand=route_source).first()
+    # # to get the source id
+    # source = Halts.query.filter_by(name=source_id).first()
+    if route_source and source_id and destination_id:
         # route_info = RouteInfo.query.filter_by(route_id=route.id).first()
         # create new route
-        new_route_info = RouteInfo(route_id=route.id, source_id=source.id, destination=destination_name, distance=distance, fare=fare)
+        new_route_info = RouteInfo(route_id=route_source, source_id=source_id, destination_id=destination_id, distance=distance, fare=fare)
         db.session.add(new_route_info)
         db.session.commit()
 
@@ -158,9 +164,9 @@ def create_dynamic_routes():
         'success': True,
         'message': 'route info added successfully',
         'status': 200,
-        'route info': {'route-id': new_route_info.route.id,
-                        'source-name': new_route_info.source.id,
-                        'destination-name': new_route_info.destination,
+        'route info': {'route-id': new_route_info.route_id,
+                        'source-name': new_route_info.source_id,
+                        'destination-name': new_route_info.destination_id,
                         'distance': new_route_info.distance,
                         'fare': new_route_info.fare}}), 200
 
