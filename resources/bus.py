@@ -162,9 +162,12 @@ def bus_available_search():
                 'reg-no': bus_schedule.bus.reg_no,
                 'type': bus_schedule.bus.type
             },
-            'ticket': {
+            'route': {
                 'source': source_halt.name,
+                'source-id': source_halt.id,
                 'destination': destination_halt.name,
+                'destination-id': destination_halt.id,
+                'distance': route_info.RouteInfo.distance,
                 'fare': route_info.RouteInfo.fare
             }
         }}), 200
