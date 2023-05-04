@@ -105,7 +105,7 @@ def get_bus_schedule():
     return jsonify({'bus': bus_schedule_list})
 
 
-@bp.route("/bus-available", methods=["GET"])
+@bp.route("/search", methods=["GET"])
 def bus_available_search():
     source_id = request.args.get('source')
     destination_id = request.args.get('destination')
@@ -171,3 +171,42 @@ def bus_available_search():
                 'fare': route_info.RouteInfo.fare
             }
         }}), 200
+
+
+
+# seat-available route
+@bp.route('/seat-available', methods=['POST'])
+def check_availability():
+    bus_id = request.args.get('bus-id')
+    passenger_count = int(request.args.get('passenger-count'))
+    date_str = request.args.get('date')
+
+    # convert date
+    date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+    if not bus_id and not passenger_count and not date:
+        return jsonify({
+            'success': False,
+            'message': 'No schedule and passenger count provided.',
+            'status': 400}), 400
+    
+    bus_schedule = BusSchedules.query.filter_by(bus_id=bus_id, date=date).first()
+
+    if not bus_schedule:
+        return jsonify({
+            'success': False,
+            'message': 'No buses available for the specified date',
+            'status': 400}), 400
+    
+    available_seats = bus_schedule.available_seats
+
+    if available_seats < passenger_count:
+        return jsonify({
+            'success': False,
+            'message': 'Not enough seats available for the specified number of passengers',
+            'status': 400}), 400
+    
+    return jsonify({
+            'success': True,
+            'available-seats': available_seats,
+            'status': 200}), 200
