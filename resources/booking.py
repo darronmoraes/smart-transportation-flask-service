@@ -221,3 +221,18 @@ def passenger_ticket_bookings(passenger_id):
         'passenger_id': passenger_id,
         'bookings': bookings_data,
         'status': 200}), 200
+
+
+
+# route to get halts for matching source geo locations
+@bp.route('/bus-stops', methods=['GET'])
+def get_bus_stops():
+    halts = Halts.query.all()
+    halts_list = []
+    for halt in halts:
+        halts_list.append({'id': halt.id, 'name': halt.name, 'long': halt.longitude, 'lat': halt.latitude})
+    return jsonify({
+        'success': True,
+        'result': halts_list,
+        'status': 200
+    }), 200
