@@ -105,6 +105,8 @@ def get_bus_schedule():
     return jsonify({'bus': bus_schedule_list})
 
 
+
+
 @bp.route("/search", methods=["GET"])
 def bus_available_search():
     source_id = request.args.get('source')
@@ -114,39 +116,37 @@ def bus_available_search():
     # convert date
     date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
-
     # query route-info model to find the route between source and destination
     route_query = db.session.query(Halts, RouteInfo).\
-    join(RouteInfo, RouteInfo.source_id == Halts.id).\
-    filter(RouteInfo.source_id == source_id, RouteInfo.destination_id == destination_id)
+        join(RouteInfo, RouteInfo.source_id == Halts.id).\
+        filter(RouteInfo.source_id == source_id, RouteInfo.destination_id == destination_id)
 
     route_info = route_query.first()
 
-    # query bus-schedule model to find th available date
-    bus_schedule = BusSchedules.query.filter(BusSchedules.date==date).first()
+    # query bus-schedule model to find the available date
+    bus_schedules = BusSchedules.query.filter(BusSchedules.date == date).all()
 
-    if bus_schedule is None:
+    if not bus_schedules:
         return jsonify({
             'success': False,
             'message': 'no buses available on this route for the specific date',
-            'status': 400}), 400
-    
+            'status': 400
+        }), 400
 
-    # get the route information from the schedule
-    route_stand = bus_schedule.schedule.route
-    # get the source and destination stands from the route info
-    source_stand = route_stand.source_stand
-    destination_stand = route_stand.destination_stand
+    available_buses = []
 
-    # query halts table to get source and destination names
-    source_halt = Halts.query.get(source_id)
-    destination_halt = Halts.query.get(destination_id)
-    
+    for bus_schedule in bus_schedules:
+        # get the route information from the schedule
+        route_stand = bus_schedule.schedule.route
+        # get the source and destination stands from the route info
+        source_stand = route_stand.source_stand
+        destination_stand = route_stand.destination_stand
 
-    return jsonify({
-        'success': True,
-        'status': 200,
-        'results': {
+        # query halts table to get source and destination names
+        source_halt = Halts.query.get(source_id)
+        destination_halt = Halts.query.get(destination_id)
+
+        available_bus_result = {
             'schedule': {
                 'id': bus_schedule.id,
                 'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
@@ -170,7 +170,15 @@ def bus_available_search():
                 'distance': route_info.RouteInfo.distance,
                 'fare': route_info.RouteInfo.fare
             }
-        }}), 200
+        }
+        available_buses.append(available_bus_result)
+
+    return jsonify({
+        'success': True,
+        'status': 200,
+        'results': available_buses
+    }), 200
+
 
 
 

@@ -10,6 +10,7 @@ from resources.passenger import bp as PassengerBluprint
 from resources.employee import bp as EmployeeBluprint
 from resources.schedule import bp as ScheduleBluprint
 from resources.bus import bp as BusBluprint
+from resources.booking import bp as BookingBluprint
 
 app = Flask(__name__)
 
@@ -69,6 +70,7 @@ app.register_blueprint(PassengerBluprint)
 app.register_blueprint(EmployeeBluprint)
 app.register_blueprint(ScheduleBluprint)
 app.register_blueprint(BusBluprint)
+app.register_blueprint(BookingBluprint)
 
 
 
