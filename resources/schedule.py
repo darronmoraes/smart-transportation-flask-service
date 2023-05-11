@@ -14,8 +14,8 @@ bp = Blueprint("route", __name__, url_prefix="/schedule")
 
 
 
-@bp.route("/route", methods=["GET"])
-def get_routes():
+@bp.route("/route-info", methods=["GET"])
+def get_routes_info():
     # query to join route_info and route to get all details of driver
     routes = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
     routes_list = []
@@ -62,6 +62,21 @@ def add_route():
         'user-admin': {'route-id': new_route.id,
                         'source': new_route.source_stand,
                         'destination': new_route.destination_stand}}), 200
+
+
+
+@bp.route("/route", methods=["GET"])
+def get_routes():
+    # query to join route_info and route to get all details of driver
+    routes = Route.query.all()
+    routes_list = []
+    for route in routes:
+        routes_list.append({
+            "route-id": route.id,
+            "source-stand": route.source_stand,
+            "destination-stand": route.destination_stand
+        })
+    return jsonify(routes_list)
 
 
 
