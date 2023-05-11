@@ -111,7 +111,7 @@ def add_halt():
 @bp.route("/add-route-info", methods=["POST"])
 def create_dynamic_routes():
     # get source and destination
-    route_source = request.json.get("stand-source-id")
+    route_id = request.json.get("route-id")
     source_id = request.json.get("source-id")
     destination_id = request.json.get("destination-id")
     distance = request.json.get("distance")
@@ -119,7 +119,7 @@ def create_dynamic_routes():
 
 
     # required route source name
-    if not route_source:
+    if not route_id:
         return jsonify({
             'success': False,
             'message': 'route source name not provided',
@@ -141,7 +141,7 @@ def create_dynamic_routes():
     # check if route with source name exists
     exisiting_route_info = db.session.query(Halts)\
         .join(RouteInfo, Halts.id == RouteInfo.source_id)\
-        .filter(Halts.name == source_id).first()
+        .filter(Halts.id == source_id).first()
     if exisiting_route_info:
         return jsonify({
             'success': False,
@@ -152,10 +152,10 @@ def create_dynamic_routes():
     # route = Route.query.filter_by(source_stand=route_source).first()
     # # to get the source id
     # source = Halts.query.filter_by(name=source_id).first()
-    if route_source and source_id and destination_id:
+    if route_id and source_id and destination_id:
         # route_info = RouteInfo.query.filter_by(route_id=route.id).first()
         # create new route
-        new_route_info = RouteInfo(route_id=route_source, source_id=source_id, destination_id=destination_id, distance=distance, fare=fare)
+        new_route_info = RouteInfo(route_id=route_id, source_id=source_id, destination_id=destination_id, distance=distance, fare=fare)
         db.session.add(new_route_info)
         db.session.commit()
 
@@ -164,11 +164,11 @@ def create_dynamic_routes():
         'success': True,
         'message': 'route info added successfully',
         'status': 200,
-        'route info': {'route-id': new_route_info.route_id,
-                        'source-name': new_route_info.source_id,
-                        'destination-name': new_route_info.destination_id,
-                        'distance': new_route_info.distance,
-                        'fare': new_route_info.fare}}), 200
+        'result': {'route-id': new_route_info.route_id,
+                    'source-name': new_route_info.source_id,
+                    'destination-name': new_route_info.destination_id,
+                    'distance': new_route_info.distance,
+                    'fare': new_route_info.fare}}), 200
 
 
 
