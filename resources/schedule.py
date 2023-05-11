@@ -101,7 +101,7 @@ def add_halt():
         'success': True,
         'message': 'source added successfully',
         'status': 200,
-        'user-admin': {'source-id': new_source.id,
+        'result': {'source-id': new_source.id,
                         'source-name': new_source.name,
                         'long': new_source.longitude,
                         'lat': new_source.latitude}}), 200
@@ -217,3 +217,24 @@ def create_schedule():
                      'departure-time': departure,
                      'arrival-time': arrival,
                      'duration': new_schedule.duration,}}), 200
+
+
+@bp.route("/schedules", methods=["GET"])
+def get_schedules():
+    # query to join route_info and route to get all details of driver
+    schedules = Schedule.query.join(Route, Schedule.route_id == Route.id).all()
+
+    schedules_list = []
+    for schedule in schedules:
+        # 
+        departure = schedule.departure_at.strftime('%H:%M')
+        arrival = schedule.arrival_at.strftime('%H:%M')
+        schedules_list.append({
+            "id": schedule.id,
+            "departure-at": departure,
+            "arrival-at": arrival,
+            "duration": schedule.duration,
+            "route-source": schedule.route.source_stand,
+            "route-destination": schedule.route.destination_stand,
+        })
+    return jsonify(schedules_list)
