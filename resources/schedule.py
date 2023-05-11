@@ -59,7 +59,7 @@ def add_route():
         'success': True,
         'message': 'route added successfully',
         'status': 200,
-        'user-admin': {'route-id': new_route.id,
+        'result': {'route-id': new_route.id,
                         'source': new_route.source_stand,
                         'destination': new_route.destination_stand}}), 200
 
@@ -73,10 +73,13 @@ def get_routes():
     for route in routes:
         routes_list.append({
             "route-id": route.id,
-            "source-stand": route.source_stand,
-            "destination-stand": route.destination_stand
+            "source": route.source_stand,
+            "destination": route.destination_stand
         })
-    return jsonify(routes_list)
+    return jsonify({
+        'success': True,
+        'status': 200,
+        'result': routes_list }), 200
 
 
 
@@ -137,7 +140,7 @@ def create_dynamic_routes():
     if not route_id:
         return jsonify({
             'success': False,
-            'message': 'route source name not provided',
+            'message': 'route-id name not provided',
             'status': 400}), 400
     
     # required source name
