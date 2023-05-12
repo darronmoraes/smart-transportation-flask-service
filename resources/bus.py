@@ -6,9 +6,6 @@ from db import db
 
 from models.bus import Bus
 from models.bus_schedules import BusSchedules
-from models.route_info import RouteInfo
-from models.route import Route
-from models.halts import Halts
 
 
 bp = Blueprint("bus", __name__, url_prefix="/bus")
@@ -21,7 +18,10 @@ def bus():
     bus_list = []
     for bus in buses:
         bus_list.append({'id': bus.id, 'rto-reg-no': bus.reg_no, 'capacity': bus.capacity, 'type': bus.type, 'status': bus.status})
-    return jsonify({'bus': bus_list})
+    return jsonify({
+        'success': False,
+        'status': 200,
+        'result': bus_list}), 200
 
 
 @bp.route("/add-bus-details", methods=["POST"])
@@ -102,119 +102,7 @@ def get_bus_schedule():
     bus_schedule_list = []
     for bus in bus_schedule:
         bus_schedule_list.append({'bus-id': bus.bus_id, 'schedule-id': bus.schedule_id, 'available-seats': bus.available_seats, 'date': bus.date})
-    return jsonify({'bus': bus_schedule_list})
-
-
-
-
-@bp.route("/search", methods=["GET"])
-def bus_available_search():
-    source_id = request.args.get('source')
-    destination_id = request.args.get('destination')
-    date_str = request.args.get('date')
-
-    # convert date
-    date = datetime.strptime(date_str, '%Y-%m-%d').date()
-
-    # query route-info model to find the route between source and destination
-    route_query = db.session.query(Halts, RouteInfo).\
-        join(RouteInfo, RouteInfo.source_id == Halts.id).\
-        filter(RouteInfo.source_id == source_id, RouteInfo.destination_id == destination_id)
-
-    route_info = route_query.first()
-
-    # query bus-schedule model to find the available date
-    bus_schedules = BusSchedules.query.filter(BusSchedules.date == date).all()
-
-    if not bus_schedules:
-        return jsonify({
-            'success': False,
-            'message': 'no buses available on this route for the specific date',
-            'status': 400
-        }), 400
-
-    available_buses = []
-
-    for bus_schedule in bus_schedules:
-        # get the route information from the schedule
-        route_stand = bus_schedule.schedule.route
-        # get the source and destination stands from the route info
-        source_stand = route_stand.source_stand
-        destination_stand = route_stand.destination_stand
-
-        # query halts table to get source and destination names
-        source_halt = Halts.query.get(source_id)
-        destination_halt = Halts.query.get(destination_id)
-
-        available_bus_result = {
-            'schedule': {
-                'id': bus_schedule.id,
-                'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
-                'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
-                'duration': bus_schedule.schedule.duration,
-                'departure-stand': source_stand,
-                'arrival-stand': destination_stand,
-                'date': bus_schedule.date.strftime('%Y-%m-%d'),
-                'seats-available': bus_schedule.available_seats
-            },
-            'bus': {
-                'id': bus_schedule.bus.id,
-                'reg-no': bus_schedule.bus.reg_no,
-                'type': bus_schedule.bus.type
-            },
-            'route': {
-                'source': source_halt.name,
-                'source-id': source_halt.id,
-                'destination': destination_halt.name,
-                'destination-id': destination_halt.id,
-                'distance': route_info.RouteInfo.distance,
-                'fare': route_info.RouteInfo.fare
-            }
-        }
-        available_buses.append(available_bus_result)
-
     return jsonify({
-        'success': True,
+        'success': False,
         'status': 200,
-        'results': available_buses
-    }), 200
-
-
-
-
-# seat-available route
-@bp.route('/seat-available', methods=['POST'])
-def check_availability():
-    bus_id = request.args.get('bus-id')
-    passenger_count = int(request.args.get('passenger-count'))
-    date_str = request.args.get('date')
-
-    # convert date
-    date = datetime.strptime(date_str, '%Y-%m-%d').date()
-
-    if not bus_id and not passenger_count and not date:
-        return jsonify({
-            'success': False,
-            'message': 'No schedule and passenger count provided.',
-            'status': 400}), 400
-    
-    bus_schedule = BusSchedules.query.filter_by(bus_id=bus_id, date=date).first()
-
-    if not bus_schedule:
-        return jsonify({
-            'success': False,
-            'message': 'No buses available for the specified date',
-            'status': 400}), 400
-    
-    available_seats = bus_schedule.available_seats
-
-    if available_seats < passenger_count:
-        return jsonify({
-            'success': False,
-            'message': 'Not enough seats available for the specified number of passengers',
-            'status': 400}), 400
-    
-    return jsonify({
-            'success': True,
-            'available-seats': available_seats,
-            'status': 200}), 200
+        'result': bus_schedule_list}), 200
