@@ -244,7 +244,7 @@ def get_schedules():
 
     schedules_list = []
     for schedule in schedules:
-        # 
+        # convert date
         departure = schedule.departure_at.strftime('%H:%M')
         arrival = schedule.arrival_at.strftime('%H:%M')
         schedules_list.append({
@@ -255,4 +255,7 @@ def get_schedules():
             "route-source": schedule.route.source_stand,
             "route-destination": schedule.route.destination_stand,
         })
-    return jsonify(schedules_list)
+    return jsonify({
+            'success': True,
+            'result': schedules_list,
+            'status': 200}), 200
