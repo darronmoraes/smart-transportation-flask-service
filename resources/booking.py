@@ -10,6 +10,7 @@ from models.halts import Halts
 from models.passenger import Passenger
 from models.route_info import RouteInfo
 from models.route import Route
+from models.pass_model import Pass
 
 
 bp = Blueprint("booking", __name__, url_prefix="/booking")
@@ -350,3 +351,171 @@ def bus_available_search():
         'status': 200,
         'results': available_buses
     }), 200
+
+
+
+"""
+Pass Booking Api's requests
+Get a list of all pass bookings
+
+"""
+# route to get pass **not required**
+@bp.route('/pass', methods=['GET'])
+def get_pass():
+    passes = Pass.query.all()
+    pass_list = []
+    for p in passes:
+        pass_list.append({
+            'id': p.id, 
+            'valid_from': p.valid_from, 
+            'valid_to': p.valid_to, 
+            'status': p.status, 
+            'price': p.price, 
+            'source': p.source.name,
+            'destination': p.destination.name})
+        
+
+    return jsonify({
+        'success': True,
+        'result': pass_list,
+        'status': 200
+    }), 200
+
+
+# route to create a new pass for passenger
+@bp.route('/passenger/<passenger_id>/passes', methods=['POST'])
+def create_passenger_pass(passenger_id):
+    # Retrieve the passenger using the passenger_id
+    passenger = Passenger.query.get(passenger_id)
+
+    # check if passenger exists
+    if not passenger:
+        return jsonify({
+            'success': False,
+            'message': 'Passenger not found',
+            'status': 400
+        }), 400
+
+    # request pass data
+    valid_from = request.json.get('valid-from')
+    valid_to = request.json.get('valid-to')
+    source_id = request.json.get('source-id')
+    destination_id = request.json.get('destination-id')
+    price = request.json.get('price')
+
+    # query for existing pass
+    existing_pass = Pass.query.filter_by(passenger_id=passenger_id, valid_from=valid_from, valid_to=valid_to, source_id=source_id, destination_id=destination_id).first()
+    if existing_pass:
+        return jsonify({
+            'success': False,
+            'message': 'Already created pass having same dates, source & destination',
+            'status': 401
+        }), 401
+
+    # create pass
+    new_pass = Pass(
+        valid_from = valid_from,
+        valid_to = valid_to,
+        status = 'active',
+        price = price,
+        passenger_id = passenger_id,
+        source_id = source_id,
+        destination_id = destination_id,
+    )
+
+    # insert pass to db
+    db.session.add(new_pass)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Pass created successfully',
+        'pass_id': new_pass.id,
+        # 'payment_id': payment.id,
+        'status': 200
+    }), 200
+    
+
+
+# route to get pass **passenger specific**
+@bp.route("/passenger/<passenger_id>/passes", methods=['GET'])
+def get_user_passes(passenger_id):
+    # Retrieve the passenger using the passenger_id
+    passenger = Passenger.query.get(passenger_id)
+
+    # check if passenger exists
+    if not passenger:
+        return jsonify({
+        'success': False,
+        'message': 'passenger not found',
+        'status': 400}), 400
+    
+    # Query Pass model to get passes on passenger-id
+    passes = Pass.query.filter_by(passenger_id=passenger_id).all()
+
+    # Store the list of passes in pass_data array-list
+    pass_data = []
+    for p in passes:
+        valid_from = p.valid_from.strftime('%Y-%m-%d')
+        valid_to = p.valid_to.strftime('%Y-%m-%d')
+        pass_data.append({
+            'id': p.id,
+            'source': p.source.name,
+            'destination': p.destination.name,
+            'status': p.status,
+            'valid-from': valid_from,
+            'valid-to': valid_to,
+            'price': p.price,
+        })
+
+    return jsonify({
+        'success': True,
+        'result': pass_data,
+        'status': 200
+    }), 200
+
+
+# validate pass for onboarding
+@bp.route("/passenger/<passenger_id>/passes/<pass_id>/validate-pass", methods=['POST'])
+def validate_pass_onboarding(passenger_id, pass_id):
+    passenger = Passenger.query.get(passenger_id)
+    if not passenger:
+        return jsonify({
+        'success': False,
+        'message': 'Passenger not found',
+        'status': 401}), 401
+    
+
+    # Retrieve pass given passenger-id and pass-id
+    pass_model = Pass.query.filter_by(id=pass_id, passenger_id=passenger_id).first()
+
+    if not pass_model:
+        return jsonify({
+        'success': False,
+        'message': 'Pass not found',
+        'status': 402}), 402
+    
+
+    # Get travel time for validation
+    travel_date_str = request.json.get('travel-date')
+    travel_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
+
+
+    if pass_model.valid_from <= travel_date <= pass_model.valid_to:
+        if pass_model.usage_counter < 2:
+            pass_model.usage_counter += 1
+            db.session.commit()
+            return jsonify({
+                'success': False,
+                'message': 'Pass is valid for travel today and counter incremented by 1',
+                'status': 200}), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Pass has already been used twice today',
+                'status': 400}), 400
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'Pass is not valid for specified travel date',
+            'status': 400}), 400
