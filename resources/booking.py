@@ -404,7 +404,13 @@ def create_passenger_pass(passenger_id):
     price = request.json.get('price')
 
     # query for existing pass
-    existing_pass = Pass.query.filter_by(passenger_id=passenger_id, valid_from=valid_from, valid_to=valid_to, source_id=source_id, destination_id=destination_id).first()
+    existing_pass = Pass.query.filter(
+        Pass.passenger_id == passenger_id, 
+        Pass.valid_from <= valid_to, 
+        Pass.valid_to >= valid_from, 
+        Pass.source_id == source_id, 
+        Pass.destination_id == destination_id
+    ).first()
     if existing_pass:
         return jsonify({
             'success': False,
