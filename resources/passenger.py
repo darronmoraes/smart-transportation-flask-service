@@ -1,7 +1,11 @@
 from flask import Blueprint, jsonify, request, session
 import json
+
+
 from models.user import User
 from models.passenger import Passenger
+
+
 from db import db
 
 from middleware.auth import auth_middleware
@@ -48,11 +52,12 @@ def add_details():
     # return added-details success
     return jsonify({
         'success': True,
-        'message': 'passenger details registered successfully',
+        'message': 'passenger details added successfully',
         'status': 200,
-        'user': {
-            'firstname': passenger.firstname,
-            'lastname': passenger.lastname,
+        'passenger': {
+            'id': passenger.id,
+            'first-name': passenger.firstname,
+            'last-name': passenger.lastname,
             'contact': passenger.contact,
             'address': passenger.address,
             'category': passenger.category,
