@@ -1,12 +1,13 @@
 from flask import Blueprint, jsonify, request
 from db import db
 
-import datetime
+from datetime import datetime
 
 from models.route import Route
 from models.halts import Halts
 from models.route_info import RouteInfo
 from models.schedule import Schedule
+from models.bus_schedules import BusSchedules
 
 
 
@@ -259,3 +260,63 @@ def get_schedules():
             'success': True,
             'result': schedules_list,
             'status': 200}), 200
+
+
+        
+# get all bus schedules for a given date
+@bp.route('/search', methods=['GET'])
+def bus_schedule_available():
+    date_str = request.args.get('date')
+
+    # convert date
+    date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+    # query bus-schedule model to find the available schedules on the given date
+    bus_schedules = BusSchedules.query.filter(BusSchedules.date == date).all()
+
+    if not bus_schedules:
+        return jsonify({
+            'success': False,
+            'message': 'No buses available on the specified date',
+            'status': 400
+        }), 400
+    
+    available_buses = []
+
+    for bus_schedule in bus_schedules:
+        # Check if the schedule is on the specified date  
+        if bus_schedule.date == date:
+            # Get the schedule object
+            schedule = Schedule.query.get(bus_schedule.schedule_id)
+
+            # Query to filter departure and arrival stands by filter schedule model
+            route = Route.query.filter_by(id=schedule.route_id).first()
+
+            available_bus_result = {
+                'schedule-info': {
+                    'id': bus_schedule.id,
+                    'date': bus_schedule.date.strftime('%Y-%m-%d'),
+                    'seats-available': bus_schedule.available_seats,
+                    'schedule': {
+                        'id': schedule.id,
+                        'departure': schedule.departure_at.strftime('%H:%M'),
+                        'arrival': schedule.arrival_at.strftime('%H:%M'),
+                        'duration': schedule.duration,
+                        'departure-stand': route.source_stand,
+                        'arrival-stand': route.destination_stand
+                    }
+                },
+                'bus': {
+                    'id': bus_schedule.bus.id,
+                    'reg-no': bus_schedule.bus.reg_no,
+                    'type': bus_schedule.bus.type
+                }
+            }
+            available_buses.append(available_bus_result)
+
+    return jsonify({
+        'success': True,
+        'status': 200,
+        'results': available_buses
+    }), 200
+
