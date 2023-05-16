@@ -243,6 +243,6 @@ def get_all_drivers():
                         'gender': employee.gender,
                         'employeeNo': employee.employee_no,
                         'licenseNo': employee.driver.license_no
-                            })
+                        })
             
     return jsonify({'status': 200, 'employee': employees_list})
