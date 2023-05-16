@@ -245,19 +245,21 @@ def get_bus_stops():
 @bp.route('/seat-available', methods=['POST'])
 def check_availability():
     bus_id = request.args.get('bus-id')
+    schedule_info_id = request.args.get('schedule-info-id')
+    schedule_id = request.args.get('schedule-id')
     passenger_count = int(request.args.get('passenger-count'))
     date_str = request.args.get('date')
 
     # convert date
     date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
-    if not bus_id and not passenger_count and not date:
+    if not bus_id and not schedule_info_id and not schedule_id and not passenger_count and not date:
         return jsonify({
             'success': False,
             'message': 'No schedule and passenger count provided.',
             'status': 400}), 400
     
-    bus_schedule = BusSchedules.query.filter_by(bus_id=bus_id, date=date).first()
+    bus_schedule = BusSchedules.query.filter_by(id=schedule_info_id, bus_id=bus_id, schedule_id=schedule_id, date=date).first()
 
     if not bus_schedule:
         return jsonify({
@@ -320,22 +322,25 @@ def bus_available_search():
         destination_halt = Halts.query.get(destination_id)
 
         available_bus_result = {
-            'schedule': {
+            'schedule-info': {
                 'id': bus_schedule.id,
-                'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
-                'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
-                'duration': bus_schedule.schedule.duration,
-                'departure-stand': source_stand,
-                'arrival-stand': destination_stand,
                 'date': bus_schedule.date.strftime('%Y-%m-%d'),
-                'seats-available': bus_schedule.available_seats
+                'seats-available': bus_schedule.available_seats,
+                'schedule' : {
+                    'id' : bus_schedule.schedule.id,
+                    'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
+                    'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
+                    'duration': bus_schedule.schedule.duration,
+                    'departure-stand': source_stand,
+                    'arrival-stand': destination_stand
+                }
             },
             'bus': {
                 'id': bus_schedule.bus.id,
                 'reg-no': bus_schedule.bus.reg_no,
                 'type': bus_schedule.bus.type
             },
-            'route': {
+            'route-info': {
                 'source': source_halt.name,
                 'source-id': source_halt.id,
                 'destination': destination_halt.name,

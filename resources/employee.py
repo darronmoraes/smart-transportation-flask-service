@@ -175,12 +175,13 @@ def login():
         return {"status": 400,
                 "message": "missing email or password"}, 400
     
-    # checks if not admin
-    # employee = Employee.query.filter(Employee.user_id == User.id).first()
-    # if not employee.role == role:
-    #     return jsonify({"status": 400,
-    #                     "message": "role type not applicable for login",
-    #                     "success": False}), 400
+    # Checks if not admin
+    employee = Employee.query.join(User).filter(User.email == email).first()
+    if not employee or not employee.role == 'admin':
+        return jsonify({"status": 400,
+                        "message": "Only admins are allowed to login",
+                        "success": False
+                    }), 400
 
     user = User.query.filter_by(email=email).first()
     # check if user credentials are valid
