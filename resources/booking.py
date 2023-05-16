@@ -65,7 +65,7 @@ def book_instant():
         'message': 'booking successfully',
         'result': {
              'ticket': {
-                'ticket-id': new_instant_booking.id,
+                'id': new_instant_booking.id,
                 'fare-amount': new_instant_booking.total_fare_amount,
                 'passenger-count': new_instant_booking.passenger_count,
                 'source': new_instant_booking.source.name,
@@ -73,13 +73,14 @@ def book_instant():
                 'booked-at': new_instant_booking.booked_at  
              },
              'bus': {
-                'bus-id': new_instant_booking.bus_schedule.bus.id,
+                'id': new_instant_booking.bus_schedule.bus.id,
                 'bus-type': new_instant_booking.bus_schedule.bus.type,
                 'reg-no': new_instant_booking.bus_schedule.bus.reg_no
              },
              'schedule-info': {
-                'schedule-id': new_instant_booking.bus_schedule.id,
+                'id': new_instant_booking.bus_schedule.id,
                 'schedule': {
+                    'id': new_instant_booking.bus_schedule.schedule.id,
                     'departure': new_instant_booking.bus_schedule.schedule.departure_at.strftime('%H:%M'),
                     'departure-stand': source_stand,
                     'arrival': new_instant_booking.bus_schedule.schedule.arrival_at.strftime('%H:%M'),
