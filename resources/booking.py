@@ -77,13 +77,15 @@ def book_instant():
                 'bus-type': new_instant_booking.bus_schedule.bus.type,
                 'reg-no': new_instant_booking.bus_schedule.bus.reg_no
              },
-             'schedule': {
+             'schedule-info': {
                 'schedule-id': new_instant_booking.bus_schedule.id,
-                'departure': new_instant_booking.bus_schedule.schedule.departure_at.strftime('%H:%M'),
-                'arrival': new_instant_booking.bus_schedule.schedule.arrival_at.strftime('%H:%M'),
-                'duration': new_instant_booking.bus_schedule.schedule.duration,
-                'departure-stand': source_stand,
-                'arrival-stand': destination_stand,
+                'schedule': {
+                    'departure': new_instant_booking.bus_schedule.schedule.departure_at.strftime('%H:%M'),
+                    'departure-stand': source_stand,
+                    'arrival': new_instant_booking.bus_schedule.schedule.arrival_at.strftime('%H:%M'),
+                    'arrival-stand': destination_stand,
+                    'duration': new_instant_booking.bus_schedule.schedule.duration,
+                },
                 'date': new_instant_booking.bus_schedule.date.strftime('%Y-%m-%d'),
                 'seats-available': new_instant_booking.bus_schedule.available_seats
              }
