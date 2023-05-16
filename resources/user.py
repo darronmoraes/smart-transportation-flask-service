@@ -55,9 +55,12 @@ def register():
         'success': True,
         'message': 'user registered successfully',
         'status': 200,
-        'user': {'token': session.token,
-                'userId': new_user.id,
-                'email': new_user.email}}), 200
+        'user': {
+            'token': session.token,
+            'id': new_user.id,
+            'email': new_user.email}}), 200
+
+
 
 @bp.route("/login", methods=["POST"])
 def login():
@@ -90,7 +93,7 @@ def login():
             "message": "login successful",
             "user": {
                 "token": session.token,
-                "userId": user.id,
+                "id": user.id,
                 "email": user.email
             }}, 200
 
@@ -115,6 +118,8 @@ def logout():
         "status": "200",
         "message": "logout successful",
     }, 200
+
+
 
 @bp.route("/send_otp", methods=["POST"])
 def send_otp():

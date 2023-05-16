@@ -197,35 +197,46 @@ def passenger_ticket_bookings(passenger_id):
             'message': f'Passenger with id {passenger_id} does not exist',
             'status': 404}), 404
 
-    passenger_bookings = Ticket.query.filter_by(passenger_id=passenger_id).all()
-    if not passenger_bookings:
+    passenger_tickets = Ticket.query.filter_by(passenger_id=passenger_id).all()
+    if not passenger_tickets:
         return jsonify({
             'success': False,
             'message': f'No bookings found for passenger with id {passenger_id}',
             'status': 404}), 404
 
-    bookings_data = []
-    for booking in passenger_bookings:
-        source_stop = Halts.query.filter_by(id=booking.source_id).first()
-        destination_stop = Halts.query.filter_by(id=booking.destination_id).first()
+    tickets_data = []
+    for ticket in passenger_tickets:
+        source_stop = Halts.query.filter_by(id=ticket.source_id).first()
+        destination_stop = Halts.query.filter_by(id=ticket.destination_id).first()
+        bus_schedule_info = BusSchedules.query.filter_by(id=ticket.bus_schedule_id).first()
 
-        booking_data = {
-            'id': booking.id,
-            'booked_at': booking.booked_at,
-            'total_fare_amount': booking.total_fare_amount,
-            'distance_travelled': booking.distance_travelled,
-            'passenger_count': booking.passenger_count,
-            'source': source_stop.name,
-            'destination': destination_stop.name,
-            'bus_schedule_id': booking.bus_schedule_id,
-            'status': booking.status
+        ticket_data = {
+            'ticket': {
+                'id': ticket.id,
+                'booked-at': ticket.booked_at,
+                'total-fare-amount': ticket.total_fare_amount,
+                'distance-travelled': ticket.distance_travelled,
+                'passenger-count': ticket.passenger_count,
+                'status': ticket.status,
+                'source': source_stop.name,
+                'destination': destination_stop.name,
+            },
+            'schedule-info': {
+                'id': ticket.bus_schedule_id,
+                'date': bus_schedule_info.date.strftime('%Y-%m-%d')
+            }, 
+            'bus': {
+                'id': bus_schedule_info.bus.id,
+                'reg-no': bus_schedule_info.bus.reg_no,
+                'type': bus_schedule_info.bus.type
+            },
         }
-        bookings_data.append(booking_data)
+        tickets_data.append(ticket_data)
 
     return jsonify({
         'success': True,
         'passenger_id': passenger_id,
-        'bookings': bookings_data,
+        'bookings': tickets_data,
         'status': 200}), 200
 
 
