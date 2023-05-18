@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, request, session
 from datetime import datetime
+from sqlalchemy.exc import SQLAlchemyError
+
 import json
 
 from db import db
@@ -11,6 +13,7 @@ from models.passenger import Passenger
 from models.route_info import RouteInfo
 from models.route import Route
 from models.pass_model import Pass
+from models.pass_booking import PassBooking
 
 
 bp = Blueprint("booking", __name__, url_prefix="/booking")
@@ -34,12 +37,21 @@ def book_instant():
             'status': 400}), 400
     
 
+    # check for existing booking by the passenger on the schedule and timestamp
     existing_booking = Ticket.query.filter_by(passenger_id=passenger_id, bus_schedule_id=bus_schedule_id, booked_at=booked_at).first()
     if existing_booking:
          return jsonify({
             'success': False,
             'message': 'There is already an existing booking for this passenger on this bus schedule.',
             'status': 400}), 400
+    
+    # check if available-seats in BusSchedules is less than passenger-count requested
+    bus_schedule = BusSchedules.query.get(bus_schedule_id)
+    if bus_schedule.available_seats < passenger_count:
+        return jsonify({
+            'success': False,
+            'message': 'Unfortunately there are not enough seats available for the requested number of passengers.',
+            'status': 410}), 410
     
 
     # add bus details if not existing
@@ -466,34 +478,61 @@ def validate_pass_onboarding(passenger_id, pass_id):
     passenger = Passenger.query.get(passenger_id)
     if not passenger:
         return jsonify({
-        'success': False,
-        'message': 'Passenger not found',
-        'status': 401}), 401
-    
+            'success': False,
+            'message': 'Passenger not found',
+            'status': 401
+        }), 401
 
-    # Retrieve pass given passenger-id and pass-id
     pass_model = Pass.query.filter_by(id=pass_id, passenger_id=passenger_id).first()
-
     if not pass_model:
         return jsonify({
-        'success': False,
-        'message': 'Pass not found',
-        'status': 402}), 402
-    
+            'success': False,
+            'message': 'Pass not found',
+            'status': 402
+        }), 402
 
-    # Get travel time for validation
     travel_date_str = request.json.get('travel-date')
     travel_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
 
+    bus_schedule_id = request.json.get('bus-schedule-id')
+    booked_at = request.json.get('booked-at')
+
+    if not bus_schedule_id or not booked_at:
+        return jsonify({
+            'success': False,
+            'message': 'Please provide a bus schedule and booking time for the pass holder',
+            'status': 420
+        }), 420
 
     if pass_model.valid_from <= travel_date <= pass_model.valid_to:
         if pass_model.usage_counter < 2:
-            pass_model.usage_counter += 1
-            db.session.commit()
-            return jsonify({
-                'success': False,
-                'message': 'Pass is valid for travel today and counter incremented by 1',
-                'status': 200}), 200
+            try:
+                # Allocate the pass to a bus schedule if seats are available
+                allocated = PassBooking.allocate_pass_to_bus_schedule(pass_id, bus_schedule_id, booked_at)
+                if allocated:
+                    # Increment the usage counter only if it's the same travel date
+                    pass_model.usage_counter += 1
+                    db.session.commit()
+
+                    return jsonify({
+                        'success': True,
+                        'message': 'Pass is valid for travel and allocated to the bus schedule',
+                        'status': 200
+                    }), 200
+                else:
+                    db.session.rollback()
+                    return jsonify({
+                        'success': False,
+                        'message': 'Pass is valid for travel today, but no seats are available in the bus schedule',
+                        'status': 403}), 403
+
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                return jsonify({
+                    'success': False,
+                    'message': 'Failed to allocate pass to bus schedule. Database error occurred.',
+                    'status': 404}), 404
+
         else:
             return jsonify({
                 'success': False,
@@ -502,5 +541,5 @@ def validate_pass_onboarding(passenger_id, pass_id):
     else:
         return jsonify({
             'success': False,
-            'message': 'Pass is not valid for specified travel date',
+            'message': 'Pass is not valid for the specified travel date',
             'status': 400}), 400
