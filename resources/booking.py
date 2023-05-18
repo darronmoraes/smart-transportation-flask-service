@@ -41,6 +41,14 @@ def book_instant():
             'message': 'There is already an existing booking for this passenger on this bus schedule.',
             'status': 400}), 400
     
+    bus_schedule = BusSchedules.query.get(bus_schedule_id)
+    # check if passenger_count is 0
+    if bus_schedule.available_seats < passenger_count:
+        return jsonify({
+            'success': False,
+            'message': 'Unfortunately there are not enough seats available for the requested number of passengers.',
+            'status': 410}), 410
+    
 
     # add bus details if not existing
     new_instant_booking = Ticket(booked_at=booked_at, total_fare_amount=total_fare_amount, distance_travelled=distance_travelled,\
