@@ -147,47 +147,7 @@ def passenger_off():
         'status': 400}), 400
 
 
-# @bp.route('/passenger-instant-booking', methods=['GET'])
-# def passengers_instant_booking():
-#     passenger = request.args.get('passenger-id')
-
-#     if not passenger:
-#         return jsonify({
-#             'success': False,
-#             'message': f'Passenger with id {passenger} does not exist',
-#             'status': 404}), 404
-    
-#     passenger_bookings = Ticket.query.filter_by(passenger_id=passenger).all()
-#     if not passenger_bookings:
-#         return jsonify({
-#             'success': False,
-#             'message': f'No bookings found for passenger with id {passenger}',
-#             'status': 404}), 404
-    
-#     bookings_data = []
-#     for booking in passenger_bookings:
-#         booking_data = {
-#             'id': booking.id,
-#             'booked_at': booking.booked_at,
-#             'total_fare_amount': booking.total_fare_amount,
-#             'distance_travelled': booking.distance_travelled,
-#             'passenger_count': booking.passenger_count,
-#             'source_id': booking.source_id,
-#             'destination_id': booking.destination_id,
-#             'bus_schedule_id': booking.bus_schedule_id,
-#             'status': booking.status
-#         }
-#         bookings_data.append(booking_data)
-
-    
-#     return jsonify({
-#             'success': True,
-#             'passenger-id': passenger,
-#             'bookings': bookings_data,
-#             'status': 200}), 200
-
-
-
+# api to get passenger ticket bookings
 @bp.route('/passenger-ticket-bookings/<int:passenger_id>', methods=['GET'])
 def passenger_ticket_bookings(passenger_id):
     passenger = Passenger.query.get(passenger_id)
@@ -295,7 +255,7 @@ def check_availability():
             'status': 200}), 200
 
 
-
+# api to get available bus-schedules for booking ticket
 @bp.route("/search", methods=["GET"])
 def bus_available_search():
     source_id = request.args.get('source')
@@ -401,7 +361,7 @@ def get_pass():
     }), 200
 
 
-# route to create a new pass for passenger
+# api to create a new pass for passenger
 @bp.route('/passenger/<passenger_id>/passes', methods=['POST'])
 def create_passenger_pass(passenger_id):
     # Retrieve the passenger using the passenger_id
@@ -462,7 +422,7 @@ def create_passenger_pass(passenger_id):
     
 
 
-# route to get pass **passenger specific**
+# api to get pass created by passenger
 @bp.route("/passenger/<passenger_id>/passes", methods=['GET'])
 def get_user_passes(passenger_id):
     # Retrieve the passenger using the passenger_id

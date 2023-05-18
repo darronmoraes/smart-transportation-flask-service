@@ -200,8 +200,8 @@ def create_schedule():
     route_id = request.json.get("route-id")
 
     # convert string to time type
-    departure_at = datetime.datetime.strptime(departure_at_str, '%H:%M').time()
-    arrival_at = datetime.datetime.strptime(arrival_at_str, '%H:%M').time()
+    departure_at = datetime.strptime(departure_at_str, '%H:%M').time()
+    arrival_at = datetime.strptime(arrival_at_str, '%H:%M').time()
 
     # required route source name
     if not departure_at and not arrival_at:
