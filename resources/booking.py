@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, session
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
 
 import json
 
@@ -106,7 +107,63 @@ def book_instant():
         'status': 200}), 200
 
 
+# Api to get the booked ticket having current date
+@bp.route('/current-booked-ticket', methods=['GET'])
+def get_current_booked_ticket():
+    passenger_id = request.args.get('passenger-id')
+    if not passenger_id:
+        return jsonify({
+            'success': False,
+            'message': 'Passenger ID is missing',
+            'status': 400
+        }), 400
 
+    current_date = date.today()
+    print(f"Current date: {current_date}")
+    ticket = Ticket.query.filter(Ticket.status == 'Booked', func.date(Ticket.booked_at) == current_date, Ticket.passenger_id == passenger_id).first()
+
+    if not ticket:
+        return jsonify({
+            'success': False,
+            'message': 'No current booked ticket found',
+            'status': 404
+        }), 404
+
+    source_stop = Halts.query.filter_by(id=ticket.source_id).first()
+    destination_stop = Halts.query.filter_by(id=ticket.destination_id).first()
+    bus_schedule_info = BusSchedules.query.filter_by(id=ticket.bus_schedule_id).first()
+
+    ticket_data = {
+        'ticket': {
+            'id': ticket.id,
+            'booked-at': ticket.booked_at,
+            'total-fare-amount': ticket.total_fare_amount,
+            'distance-travelled': ticket.distance_travelled,
+            'passenger-count': ticket.passenger_count,
+            'status': ticket.status,
+            'source': source_stop.name,
+            'destination': destination_stop.name,
+        },
+        'schedule-info': {
+            'id': ticket.bus_schedule_id,
+            'date': bus_schedule_info.date.strftime('%Y-%m-%d')
+        },
+        'bus': {
+            'id': bus_schedule_info.bus.id,
+            'reg-no': bus_schedule_info.bus.reg_no,
+            'type': bus_schedule_info.bus.type
+        },
+    }
+
+    return jsonify({
+        'success': True,
+        'ticket': ticket_data,
+        'status': 200
+    }), 200
+
+
+
+# Api to mark passenger ticket status as Completed
 @bp.route("/passenger-off", methods=["POST"])
 def passenger_off():
     ticket_id = request.json.get("ticket-id")
