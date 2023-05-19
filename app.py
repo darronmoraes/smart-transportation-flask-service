@@ -28,8 +28,8 @@ CORS(app)
 
 
 # connect db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost/sts_test'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root1234@sts-dev.cd6q49enrqry.ap-south-1.rds.amazonaws.com/sts_test'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost/sts_test'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root1234@sts-dev.cd6q49enrqry.ap-south-1.rds.amazonaws.com/sts_test'
 db.init_app(app)
 
 # Secret Key
