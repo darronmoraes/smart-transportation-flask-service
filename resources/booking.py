@@ -413,14 +413,20 @@ def get_pass():
     passes = Pass.query.all()
     pass_list = []
     for p in passes:
+
+        # route info source and destination query
+        route_info = p.route_info
+        source = route_info.source.name
+        destination = route_info.destination.name
+
         pass_list.append({
             'id': p.id, 
             'valid_from': p.valid_from, 
             'valid_to': p.valid_to, 
             'status': p.status, 
             'price': p.price, 
-            'source': p.source.name,
-            'destination': p.destination.name})
+            'source': source,
+            'destination': destination})
         
 
     return jsonify({
@@ -516,10 +522,16 @@ def get_user_passes(passenger_id):
     for p in passes:
         valid_from = p.valid_from.strftime('%Y-%m-%d')
         valid_to = p.valid_to.strftime('%Y-%m-%d')
+
+        # route info source and destination query
+        route_info = p.route_info
+        source = route_info.source.name
+        destination = route_info.destination.name
+
         pass_data.append({
             'id': p.id,
-            'source': p.source.name,
-            'destination': p.destination.name,
+            'source': source,
+            'destination': destination,
             'status': p.status,
             'valid-from': valid_from,
             'valid-to': valid_to,
