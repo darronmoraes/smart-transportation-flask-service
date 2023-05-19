@@ -447,17 +447,22 @@ def create_passenger_pass(passenger_id):
     # request pass data
     valid_from = request.json.get('valid-from')
     valid_to = request.json.get('valid-to')
-    source_id = request.json.get('source-id')
-    destination_id = request.json.get('destination-id')
+    route_info_id = request.json.get('route-info-id')
     price = request.json.get('price')
+
+    if not route_info_id:
+        return jsonify({
+            'success': False,
+            'message': 'provide a route for pass',
+            'status': 400
+        }), 400
 
     # query for existing pass
     existing_pass = Pass.query.filter(
         Pass.passenger_id == passenger_id, 
         Pass.valid_from <= valid_to, 
         Pass.valid_to >= valid_from, 
-        Pass.source_id == source_id, 
-        Pass.destination_id == destination_id
+        Pass.route_info_id == route_info_id,
     ).first()
     if existing_pass:
         return jsonify({
@@ -473,8 +478,7 @@ def create_passenger_pass(passenger_id):
         status = 'active',
         price = price,
         passenger_id = passenger_id,
-        source_id = source_id,
-        destination_id = destination_id,
+        route_info_id = route_info_id,
     )
 
     # insert pass to db
