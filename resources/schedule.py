@@ -8,7 +8,7 @@ from models.halts import Halts
 from models.route_info import RouteInfo
 from models.schedule import Schedule
 from models.bus_schedules import BusSchedules
-
+from models.route_type import RouteType
 
 
 bp = Blueprint("route", __name__, url_prefix="/schedule")
@@ -17,18 +17,26 @@ bp = Blueprint("route", __name__, url_prefix="/schedule")
 
 @bp.route("/route-info", methods=["GET"])
 def get_routes_info():
-    # query to join route_info and route to get all details of driver
-    routes = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
-    routes_list = []
-    for route in routes:
-        routes_list.append({
-            "route-id": route.route_id,
-            "source-id": route.source_id,
-            "destination": route.destination_id,
-            "distance": route.distance,
-            "fare": route.fare
-        })
-    return jsonify(routes_list)
+    # query to join route_info on route to get all details of routes-info
+    routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
+    routes_info_list = []
+    for routeInfo in routesInfo:
+        route_info_data = {
+            "route-id": routeInfo.route_id,
+            "source-id": routeInfo.source_id,
+            "destination": routeInfo.destination_id,
+            "distance": routeInfo.distance,
+            "fare": routeInfo.fare
+        }
+
+        # query if route-info has route-type data and add to route-info-data
+        route_type = db.session.query(RouteType).filter_by(route_info_id=routeInfo.id).first()
+        if route_type and route_type.type:
+            route_info_data["route-type"] = route_type.type
+
+        # append route-info-list with route-info-data
+        routes_info_list.append(route_info_data)
+    return jsonify(routes_info_list)
 
 
 @bp.route("/add-route", methods=["POST"])
@@ -135,6 +143,7 @@ def create_dynamic_routes():
     destination_id = request.json.get("destination-id")
     distance = request.json.get("distance")
     fare = request.json.get("fare")
+    route_type = request.json.get("route-type")
 
 
     # required route source name
@@ -158,25 +167,35 @@ def create_dynamic_routes():
             'status': 400}), 400
     
     # check if route with source name exists
-    exisiting_route_info = db.session.query(Halts)\
+    existing_route_info = db.session.query(Halts)\
         .join(RouteInfo, Halts.id == RouteInfo.source_id)\
         .filter(Halts.id == source_id).first()
-    if exisiting_route_info:
+    if existing_route_info:
         return jsonify({
             'success': False,
             'message': 'route info already exists',
             'status': 400}), 400
     
-    # # to get the route id
-    # route = Route.query.filter_by(source_stand=route_source).first()
-    # # to get the source id
-    # source = Halts.query.filter_by(name=source_id).first()
+    existing_route_type = db.session.query(RouteType)\
+        .filter_by(route_info_id=route_id).first()
+    if existing_route_info and existing_route_type and route_type == 'SHUTTLE':
+        return jsonify({
+            'success': False,
+            'message': 'route info already exists having route type',
+            'status': 400}), 400
+    
     if route_id and source_id and destination_id:
-        # route_info = RouteInfo.query.filter_by(route_id=route.id).first()
         # create new route
         new_route_info = RouteInfo(route_id=route_id, source_id=source_id, destination_id=destination_id, distance=distance, fare=fare)
         db.session.add(new_route_info)
         db.session.commit()
+
+        # if user provides route-type than populate the route-type model
+        if route_type:
+            # create new route type
+            new_route_type = RouteType(type=route_type, route_info_id=new_route_info.id)
+            db.session.add(new_route_type)
+            db.session.commit()
 
     # return route added successfully
     return jsonify({

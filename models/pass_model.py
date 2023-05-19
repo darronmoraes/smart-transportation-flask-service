@@ -4,6 +4,7 @@ from db import db
 
 from models.halts import Halts
 from models.passenger import Passenger
+from models.route_info import RouteInfo
 
 class Pass(db.Model):
     __tablename__ = 'pass'
@@ -15,13 +16,11 @@ class Pass(db.Model):
     usage_counter = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
-    source_id = db.Column(db.Integer, db.ForeignKey(Halts.id), nullable=False)
-    destination_id = db.Column(db.Integer, db.ForeignKey(Halts.id), nullable=False)
+    route_info_id = db.Column(db.Integer, db.ForeignKey(RouteInfo.id), nullable=False)
     passenger_id = db.Column(db.Integer, db.ForeignKey(Passenger.id), nullable=False)
     # payment_id = db.Column(db.Integer, db.ForeignKey(Passenger.id), nullable=False)
 
-    source = db.relationship('Halts', foreign_keys=[source_id], backref='source', uselist=False)
-    destination = db.relationship('Halts', foreign_keys=[destination_id], backref='destination', uselist=False)
+    route_info = db.relationship('RouteInfo', backref='pass', uselist=False)
 
 
 
