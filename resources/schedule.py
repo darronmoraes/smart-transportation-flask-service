@@ -17,18 +17,26 @@ bp = Blueprint("route", __name__, url_prefix="/schedule")
 
 @bp.route("/route-info", methods=["GET"])
 def get_routes_info():
-    # query to join route_info and route to get all details of driver
-    routes = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
-    routes_list = []
-    for route in routes:
-        routes_list.append({
-            "route-id": route.route_id,
-            "source-id": route.source_id,
-            "destination": route.destination_id,
-            "distance": route.distance,
-            "fare": route.fare
-        })
-    return jsonify(routes_list)
+    # query to join route_info on route to get all details of routes-info
+    routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
+    routes_info_list = []
+    for routeInfo in routesInfo:
+        route_info_data = {
+            "route-id": routeInfo.route_id,
+            "source-id": routeInfo.source_id,
+            "destination": routeInfo.destination_id,
+            "distance": routeInfo.distance,
+            "fare": routeInfo.fare
+        }
+
+        # query if route-info has route-type data and add to route-info-data
+        route_type = db.session.query(RouteType).filter_by(route_info_id=routeInfo.id).first()
+        if route_type and route_type.type:
+            route_info_data["route-type"] = route_type.type
+
+        # append route-info-list with route-info-data
+        routes_info_list.append(route_info_data)
+    return jsonify(routes_info_list)
 
 
 @bp.route("/add-route", methods=["POST"])
