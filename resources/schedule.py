@@ -21,10 +21,21 @@ def get_routes_info():
     routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
     routes_info_list = []
     for routeInfo in routesInfo:
+
+        # query route-info source and destination
+        source = routeInfo.source.name
+        destination = routeInfo.destination.name
+
         route_info_data = {
-            "route-id": routeInfo.route_id,
-            "source-id": routeInfo.source_id,
-            "destination": routeInfo.destination_id,
+            "id": routeInfo.route_id,
+            "source": {
+                "id": routeInfo.source_id,
+                "name": source
+            },
+            "destination": {
+                "id": routeInfo.destination_id,
+                "name": destination
+            },
             "distance": routeInfo.distance,
             "fare": routeInfo.fare
         }
@@ -32,11 +43,15 @@ def get_routes_info():
         # query if route-info has route-type data and add to route-info-data
         route_type = db.session.query(RouteType).filter_by(route_info_id=routeInfo.id).first()
         if route_type and route_type.type:
-            route_info_data["route-type"] = route_type.type
+            route_info_data["type"] = route_type.type
 
         # append route-info-list with route-info-data
         routes_info_list.append(route_info_data)
-    return jsonify(routes_info_list)
+    return jsonify({
+        'result': routes_info_list,
+        'status': 200,
+        'success': True
+        }), 200
 
 
 @bp.route("/add-route", methods=["POST"])
