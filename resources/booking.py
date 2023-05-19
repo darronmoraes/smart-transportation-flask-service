@@ -1,5 +1,8 @@
 from flask import Blueprint, jsonify, request, session
-from datetime import datetime
+from datetime import datetime, date
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
+
 import json
 
 from db import db
@@ -11,6 +14,7 @@ from models.passenger import Passenger
 from models.route_info import RouteInfo
 from models.route import Route
 from models.pass_model import Pass
+from models.pass_booking import PassBooking
 
 
 bp = Blueprint("booking", __name__, url_prefix="/booking")
@@ -34,12 +38,21 @@ def book_instant():
             'status': 400}), 400
     
 
+    # check for existing booking by the passenger on the schedule and timestamp
     existing_booking = Ticket.query.filter_by(passenger_id=passenger_id, bus_schedule_id=bus_schedule_id, booked_at=booked_at).first()
     if existing_booking:
          return jsonify({
             'success': False,
             'message': 'There is already an existing booking for this passenger on this bus schedule.',
             'status': 400}), 400
+    
+    # check if available-seats in BusSchedules is less than passenger-count requested
+    bus_schedule = BusSchedules.query.get(bus_schedule_id)
+    if bus_schedule.available_seats < passenger_count:
+        return jsonify({
+            'success': False,
+            'message': 'Unfortunately there are not enough seats available for the requested number of passengers.',
+            'status': 410}), 410
     
 
     # add bus details if not existing
@@ -65,7 +78,7 @@ def book_instant():
         'message': 'booking successfully',
         'result': {
              'ticket': {
-                'ticket-id': new_instant_booking.id,
+                'id': new_instant_booking.id,
                 'fare-amount': new_instant_booking.total_fare_amount,
                 'passenger-count': new_instant_booking.passenger_count,
                 'source': new_instant_booking.source.name,
@@ -73,17 +86,20 @@ def book_instant():
                 'booked-at': new_instant_booking.booked_at  
              },
              'bus': {
-                'bus-id': new_instant_booking.bus_schedule.bus.id,
+                'id': new_instant_booking.bus_schedule.bus.id,
                 'bus-type': new_instant_booking.bus_schedule.bus.type,
                 'reg-no': new_instant_booking.bus_schedule.bus.reg_no
              },
-             'schedule': {
-                'schedule-id': new_instant_booking.bus_schedule.id,
-                'departure': new_instant_booking.bus_schedule.schedule.departure_at.strftime('%H:%M'),
-                'arrival': new_instant_booking.bus_schedule.schedule.arrival_at.strftime('%H:%M'),
-                'duration': new_instant_booking.bus_schedule.schedule.duration,
-                'departure-stand': source_stand,
-                'arrival-stand': destination_stand,
+             'schedule-info': {
+                'id': new_instant_booking.bus_schedule.id,
+                'schedule': {
+                    'id': new_instant_booking.bus_schedule.schedule.id,
+                    'departure': new_instant_booking.bus_schedule.schedule.departure_at.strftime('%H:%M'),
+                    'departure-stand': source_stand,
+                    'arrival': new_instant_booking.bus_schedule.schedule.arrival_at.strftime('%H:%M'),
+                    'arrival-stand': destination_stand,
+                    'duration': new_instant_booking.bus_schedule.schedule.duration,
+                },
                 'date': new_instant_booking.bus_schedule.date.strftime('%Y-%m-%d'),
                 'seats-available': new_instant_booking.bus_schedule.available_seats
              }
@@ -91,7 +107,63 @@ def book_instant():
         'status': 200}), 200
 
 
+# Api to get the booked ticket having current date
+@bp.route('/current-booked-ticket', methods=['GET'])
+def get_current_booked_ticket():
+    passenger_id = request.args.get('passenger-id')
+    if not passenger_id:
+        return jsonify({
+            'success': False,
+            'message': 'Passenger ID is missing',
+            'status': 400
+        }), 400
 
+    current_date = date.today()
+    print(f"Current date: {current_date}")
+    ticket = Ticket.query.filter(Ticket.status == 'Booked', func.date(Ticket.booked_at) == current_date, Ticket.passenger_id == passenger_id).first()
+
+    if not ticket:
+        return jsonify({
+            'success': False,
+            'message': 'No current booked ticket found',
+            'status': 404
+        }), 404
+
+    source_stop = Halts.query.filter_by(id=ticket.source_id).first()
+    destination_stop = Halts.query.filter_by(id=ticket.destination_id).first()
+    bus_schedule_info = BusSchedules.query.filter_by(id=ticket.bus_schedule_id).first()
+
+    ticket_data = {
+        'ticket': {
+            'id': ticket.id,
+            'booked-at': ticket.booked_at,
+            'total-fare-amount': ticket.total_fare_amount,
+            'distance-travelled': ticket.distance_travelled,
+            'passenger-count': ticket.passenger_count,
+            'status': ticket.status,
+            'source': source_stop.name,
+            'destination': destination_stop.name,
+        },
+        'schedule-info': {
+            'id': ticket.bus_schedule_id,
+            'date': bus_schedule_info.date.strftime('%Y-%m-%d')
+        },
+        'bus': {
+            'id': bus_schedule_info.bus.id,
+            'reg-no': bus_schedule_info.bus.reg_no,
+            'type': bus_schedule_info.bus.type
+        },
+    }
+
+    return jsonify({
+        'success': True,
+        'ticket': ticket_data,
+        'status': 200
+    }), 200
+
+
+
+# Api to mark passenger ticket status as Completed
 @bp.route("/passenger-off", methods=["POST"])
 def passenger_off():
     ticket_id = request.json.get("ticket-id")
@@ -144,47 +216,7 @@ def passenger_off():
         'status': 400}), 400
 
 
-# @bp.route('/passenger-instant-booking', methods=['GET'])
-# def passengers_instant_booking():
-#     passenger = request.args.get('passenger-id')
-
-#     if not passenger:
-#         return jsonify({
-#             'success': False,
-#             'message': f'Passenger with id {passenger} does not exist',
-#             'status': 404}), 404
-    
-#     passenger_bookings = Ticket.query.filter_by(passenger_id=passenger).all()
-#     if not passenger_bookings:
-#         return jsonify({
-#             'success': False,
-#             'message': f'No bookings found for passenger with id {passenger}',
-#             'status': 404}), 404
-    
-#     bookings_data = []
-#     for booking in passenger_bookings:
-#         booking_data = {
-#             'id': booking.id,
-#             'booked_at': booking.booked_at,
-#             'total_fare_amount': booking.total_fare_amount,
-#             'distance_travelled': booking.distance_travelled,
-#             'passenger_count': booking.passenger_count,
-#             'source_id': booking.source_id,
-#             'destination_id': booking.destination_id,
-#             'bus_schedule_id': booking.bus_schedule_id,
-#             'status': booking.status
-#         }
-#         bookings_data.append(booking_data)
-
-    
-#     return jsonify({
-#             'success': True,
-#             'passenger-id': passenger,
-#             'bookings': bookings_data,
-#             'status': 200}), 200
-
-
-
+# api to get passenger ticket bookings
 @bp.route('/passenger-ticket-bookings/<int:passenger_id>', methods=['GET'])
 def passenger_ticket_bookings(passenger_id):
     passenger = Passenger.query.get(passenger_id)
@@ -194,35 +226,46 @@ def passenger_ticket_bookings(passenger_id):
             'message': f'Passenger with id {passenger_id} does not exist',
             'status': 404}), 404
 
-    passenger_bookings = Ticket.query.filter_by(passenger_id=passenger_id).all()
-    if not passenger_bookings:
+    passenger_tickets = Ticket.query.filter_by(passenger_id=passenger_id).all()
+    if not passenger_tickets:
         return jsonify({
             'success': False,
             'message': f'No bookings found for passenger with id {passenger_id}',
             'status': 404}), 404
 
-    bookings_data = []
-    for booking in passenger_bookings:
-        source_stop = Halts.query.filter_by(id=booking.source_id).first()
-        destination_stop = Halts.query.filter_by(id=booking.destination_id).first()
+    tickets_data = []
+    for ticket in passenger_tickets:
+        source_stop = Halts.query.filter_by(id=ticket.source_id).first()
+        destination_stop = Halts.query.filter_by(id=ticket.destination_id).first()
+        bus_schedule_info = BusSchedules.query.filter_by(id=ticket.bus_schedule_id).first()
 
-        booking_data = {
-            'id': booking.id,
-            'booked_at': booking.booked_at,
-            'total_fare_amount': booking.total_fare_amount,
-            'distance_travelled': booking.distance_travelled,
-            'passenger_count': booking.passenger_count,
-            'source': source_stop.name,
-            'destination': destination_stop.name,
-            'bus_schedule_id': booking.bus_schedule_id,
-            'status': booking.status
+        ticket_data = {
+            'ticket': {
+                'id': ticket.id,
+                'booked-at': ticket.booked_at,
+                'total-fare-amount': ticket.total_fare_amount,
+                'distance-travelled': ticket.distance_travelled,
+                'passenger-count': ticket.passenger_count,
+                'status': ticket.status,
+                'source': source_stop.name,
+                'destination': destination_stop.name,
+            },
+            'schedule-info': {
+                'id': ticket.bus_schedule_id,
+                'date': bus_schedule_info.date.strftime('%Y-%m-%d')
+            }, 
+            'bus': {
+                'id': bus_schedule_info.bus.id,
+                'reg-no': bus_schedule_info.bus.reg_no,
+                'type': bus_schedule_info.bus.type
+            },
         }
-        bookings_data.append(booking_data)
+        tickets_data.append(ticket_data)
 
     return jsonify({
         'success': True,
         'passenger_id': passenger_id,
-        'bookings': bookings_data,
+        'bookings': tickets_data,
         'status': 200}), 200
 
 
@@ -245,19 +288,21 @@ def get_bus_stops():
 @bp.route('/seat-available', methods=['POST'])
 def check_availability():
     bus_id = request.args.get('bus-id')
+    schedule_info_id = request.args.get('schedule-info-id')
+    schedule_id = request.args.get('schedule-id')
     passenger_count = int(request.args.get('passenger-count'))
     date_str = request.args.get('date')
 
     # convert date
     date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
-    if not bus_id and not passenger_count and not date:
+    if not bus_id and not schedule_info_id and not schedule_id and not passenger_count and not date:
         return jsonify({
             'success': False,
             'message': 'No schedule and passenger count provided.',
             'status': 400}), 400
     
-    bus_schedule = BusSchedules.query.filter_by(bus_id=bus_id, date=date).first()
+    bus_schedule = BusSchedules.query.filter_by(id=schedule_info_id, bus_id=bus_id, schedule_id=schedule_id, date=date).first()
 
     if not bus_schedule:
         return jsonify({
@@ -279,7 +324,7 @@ def check_availability():
             'status': 200}), 200
 
 
-
+# api to get available bus-schedules for booking ticket
 @bp.route("/search", methods=["GET"])
 def bus_available_search():
     source_id = request.args.get('source')
@@ -320,22 +365,25 @@ def bus_available_search():
         destination_halt = Halts.query.get(destination_id)
 
         available_bus_result = {
-            'schedule': {
+            'schedule-info': {
                 'id': bus_schedule.id,
-                'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
-                'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
-                'duration': bus_schedule.schedule.duration,
-                'departure-stand': source_stand,
-                'arrival-stand': destination_stand,
                 'date': bus_schedule.date.strftime('%Y-%m-%d'),
-                'seats-available': bus_schedule.available_seats
+                'seats-available': bus_schedule.available_seats,
+                'schedule' : {
+                    'id' : bus_schedule.schedule.id,
+                    'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
+                    'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
+                    'duration': bus_schedule.schedule.duration,
+                    'departure-stand': source_stand,
+                    'arrival-stand': destination_stand
+                }
             },
             'bus': {
                 'id': bus_schedule.bus.id,
                 'reg-no': bus_schedule.bus.reg_no,
                 'type': bus_schedule.bus.type
             },
-            'route': {
+            'route-info': {
                 'source': source_halt.name,
                 'source-id': source_halt.id,
                 'destination': destination_halt.name,
@@ -382,7 +430,7 @@ def get_pass():
     }), 200
 
 
-# route to create a new pass for passenger
+# api to create a new pass for passenger
 @bp.route('/passenger/<passenger_id>/passes', methods=['POST'])
 def create_passenger_pass(passenger_id):
     # Retrieve the passenger using the passenger_id
@@ -443,7 +491,7 @@ def create_passenger_pass(passenger_id):
     
 
 
-# route to get pass **passenger specific**
+# api to get pass created by passenger
 @bp.route("/passenger/<passenger_id>/passes", methods=['GET'])
 def get_user_passes(passenger_id):
     # Retrieve the passenger using the passenger_id
@@ -487,34 +535,61 @@ def validate_pass_onboarding(passenger_id, pass_id):
     passenger = Passenger.query.get(passenger_id)
     if not passenger:
         return jsonify({
-        'success': False,
-        'message': 'Passenger not found',
-        'status': 401}), 401
-    
+            'success': False,
+            'message': 'Passenger not found',
+            'status': 401
+        }), 401
 
-    # Retrieve pass given passenger-id and pass-id
     pass_model = Pass.query.filter_by(id=pass_id, passenger_id=passenger_id).first()
-
     if not pass_model:
         return jsonify({
-        'success': False,
-        'message': 'Pass not found',
-        'status': 402}), 402
-    
+            'success': False,
+            'message': 'Pass not found',
+            'status': 402
+        }), 402
 
-    # Get travel time for validation
     travel_date_str = request.json.get('travel-date')
     travel_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
 
+    bus_schedule_id = request.json.get('bus-schedule-id')
+    booked_at = request.json.get('booked-at')
+
+    if not bus_schedule_id or not booked_at:
+        return jsonify({
+            'success': False,
+            'message': 'Please provide a bus schedule and booking time for the pass holder',
+            'status': 420
+        }), 420
 
     if pass_model.valid_from <= travel_date <= pass_model.valid_to:
         if pass_model.usage_counter < 2:
-            pass_model.usage_counter += 1
-            db.session.commit()
-            return jsonify({
-                'success': False,
-                'message': 'Pass is valid for travel today and counter incremented by 1',
-                'status': 200}), 200
+            try:
+                # Allocate the pass to a bus schedule if seats are available
+                allocated = PassBooking.allocate_pass_to_bus_schedule(pass_id, bus_schedule_id, booked_at)
+                if allocated:
+                    # Increment the usage counter only if it's the same travel date
+                    pass_model.usage_counter += 1
+                    db.session.commit()
+
+                    return jsonify({
+                        'success': True,
+                        'message': 'Pass is valid for travel and allocated to the bus schedule',
+                        'status': 200
+                    }), 200
+                else:
+                    db.session.rollback()
+                    return jsonify({
+                        'success': False,
+                        'message': 'Pass is valid for travel today, but no seats are available in the bus schedule',
+                        'status': 403}), 403
+
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                return jsonify({
+                    'success': False,
+                    'message': 'Failed to allocate pass to bus schedule. Database error occurred.',
+                    'status': 404}), 404
+
         else:
             return jsonify({
                 'success': False,
@@ -523,5 +598,5 @@ def validate_pass_onboarding(passenger_id, pass_id):
     else:
         return jsonify({
             'success': False,
-            'message': 'Pass is not valid for specified travel date',
+            'message': 'Pass is not valid for the specified travel date',
             'status': 400}), 400
