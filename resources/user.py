@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, session
 import json
 from models.user import User
 from models.session import Session
+from models.passenger import Passenger
 from db import db
 
 from utils.email_utils import send_otp_email
@@ -89,12 +90,34 @@ def login():
     db.session.add(session)
     db.session.commit()
 
+    # filter passenger data
+    passenger = Passenger.query.filter_by(user_id=user.id).first()
+
+    # user data
+    user_data = {
+        'email': user.email,
+        'id': user.id
+    }
+
+    # user's as passneger data
+    passenger_data = {
+        'id': passenger.id,
+        'firstname': passenger.firstname,
+        'lastname': passenger.lastname,
+        'contact': passenger.contact,
+        'address': passenger.address,
+        'category': passenger.category,
+        'gender': passenger.gender,
+        'dob': passenger.dob
+    }
+
+    # api response
     return {"status": "200",
             "message": "login successful",
-            "user": {
-                "token": session.token,
-                "id": user.id,
-                "email": user.email
+            "session": {
+                'token': session.token,
+                'user': user_data,
+                'passenger': passenger_data
             }}, 200
 
 
