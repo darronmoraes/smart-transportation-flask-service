@@ -1,5 +1,11 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, current_app
 import json
+from datetime import datetime
+# for file upload securely
+from werkzeug.utils import secure_filename
+# upload files
+import os
+import uuid
 
 
 from models.user import User
@@ -9,6 +15,8 @@ from models.passenger import Passenger
 from db import db
 
 from middleware.auth import auth_middleware
+
+from utils.pic_utils import allowed_file
 
 bp = Blueprint("passenger", __name__, url_prefix="/user")
 
@@ -63,3 +71,51 @@ def add_details():
             'category': passenger.category,
             'gender': passenger.gender,
             'dob': passenger.dob}}), 200
+
+
+
+# upload profile image function having app level permissions
+def home(app, passenger_id):
+    # passenger_id = request.json.get('passenger-id')
+
+    # check if passenger id is provided
+    if not passenger_id:
+        return jsonify({'status': 401, 'message': 'passenger-id not provided', 'success': False}), 401
+
+    # Check if passenger exists in db
+    existing_passenger = Passenger.query.get(passenger_id)
+    if not existing_passenger:
+        return jsonify({'status': 402, 'message': 'passenger-id does not exists', 'success': False}), 402
+
+    if 'photo' not in request.files:
+        return jsonify({'status': 403, 'message': 'no file', 'success': False}), 403
+
+    photo = request.files['photo']
+
+    # photo selected check
+    if photo.filename == '':
+        return jsonify({'status': 406, 'message': 'no file selected', 'success': False}), 406
+
+    # photo extension check
+    if not allowed_file(photo.filename):
+        return jsonify({'status': 407, 'message': 'photo file type not allowed', 'success': False}), 407
+
+
+    # save photo
+    if photo and allowed_file(photo.filename):
+        # generate unique filename
+        unique_filename = str(uuid.uuid4()) + '-' + datetime.now().strftime('%Y%m%d%H%M%S') + secure_filename(photo.filename)
+        # save the file to disk
+        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+
+        # update passenger's profile image in db
+        existing_passenger.photo = unique_filename
+        db.session.commit()
+
+    return jsonify({'status': 200, 'message': 'photo uploaded successfully', 'success': True}), 200
+
+
+@bp.route('/upload-pic/<int:passenger_id>', methods=['POST'])
+@auth_middleware
+def upload_pic(passenger_id):
+    return home(current_app, passenger_id)
