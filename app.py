@@ -19,6 +19,10 @@ from resources.booking import bp as BookingBluprint
 # import Pass model for scheduling
 from models.pass_model import Pass
 
+# import constants
+from consts import UPLOAD_FOLDER
+
+
 app = Flask(__name__)
 
 marshmallow = Marshmallow()
@@ -35,6 +39,8 @@ db.init_app(app)
 # Secret Key
 # app.config['SECRET_KEY'] = 'smarttransportationsystem2023'
 
+# Upload profile image
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Create a scheduler
 scheduler = BackgroundScheduler(daemon=True)
