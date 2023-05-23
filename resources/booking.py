@@ -520,29 +520,36 @@ def get_user_passes(passenger_id):
     # Store the list of passes in pass_data array-list
     pass_data = []
     for p in passes:
-        valid_from = p.valid_from.strftime('%Y-%m-%d')
-        valid_to = p.valid_to.strftime('%Y-%m-%d')
+        if p:
+            valid_from = p.valid_from.strftime('%Y-%m-%d')
+            valid_to = p.valid_to.strftime('%Y-%m-%d')
 
-        # route info source and destination query
-        route_info = p.route_info
-        source = route_info.source.name
-        destination = route_info.destination.name
+            # route info source and destination query
+            route_info = p.route_info
+            source = route_info.source.name
+            destination = route_info.destination.name
 
-        pass_data.append({
-            'id': p.id,
-            'source': source,
-            'destination': destination,
-            'status': p.status,
-            'valid-from': valid_from,
-            'valid-to': valid_to,
-            'price': p.price,
-        })
+            pass_data.append({
+                'id': p.id,
+                'source': source,
+                'destination': destination,
+                'status': p.status,
+                'valid-from': valid_from,
+                'valid-to': valid_to,
+                'price': p.price,
+            })
+
+            return jsonify({
+                'success': True,
+                'result': pass_data,
+                'status': 200
+            }), 200
 
     return jsonify({
-        'success': True,
-        'result': pass_data,
-        'status': 200
-    }), 200
+        'success': False,
+        'message': 'create a new pass to view',
+        'status': 400
+    }), 400
 
 
 # validate pass for onboarding
