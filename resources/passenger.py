@@ -80,25 +80,40 @@ def home(app, passenger_id):
 
     # check if passenger id is provided
     if not passenger_id:
-        return jsonify({'status': 401, 'message': 'passenger-id not provided', 'success': False}), 401
+        return jsonify({
+            'status': 401, 
+            'message': 'passenger-id not provided', 
+            'success': False}), 401
 
     # Check if passenger exists in db
     existing_passenger = Passenger.query.get(passenger_id)
     if not existing_passenger:
-        return jsonify({'status': 402, 'message': 'passenger-id does not exists', 'success': False}), 402
+        return jsonify({
+            'status': 402, 
+            'message': 'passenger-id does not exists', 
+            'success': False}), 402
 
     if 'photo' not in request.files:
-        return jsonify({'status': 403, 'message': 'no file', 'success': False}), 403
+        return jsonify({
+            'status': 403, 
+            'message': 'no file', 
+            'success': False}), 403
 
     photo = request.files['photo']
 
     # photo selected check
     if photo.filename == '':
-        return jsonify({'status': 406, 'message': 'no file selected', 'success': False}), 406
+        return jsonify({
+            'status': 406, 
+            'message': 'no file selected', 
+            'success': False}), 406
 
     # photo extension check
     if not allowed_file(photo.filename):
-        return jsonify({'status': 407, 'message': 'photo file type not allowed', 'success': False}), 407
+        return jsonify({
+            'status': 407, 
+            'message': 'photo file type not allowed', 
+            'success': False}), 407
 
 
     # save photo
@@ -112,7 +127,20 @@ def home(app, passenger_id):
         existing_passenger.photo = unique_filename
         db.session.commit()
 
-    return jsonify({'status': 200, 'message': 'photo uploaded successfully', 'success': True}), 200
+        # Construct the photo URL or data based on your requirements
+        photo_url = f"https://127.0.0.1:5000/file/pic/{unique_filename}"
+
+        return jsonify({
+            'status': 200, 
+            'message': 'Photo uploaded successfully',
+            'photo_url': photo_url,  # Include the photo URL or data in the response
+            'success': True
+        }), 200
+
+    return jsonify({
+        'status': 400, 
+        'message': 'Invalid file format', 
+        'success': False}), 400
 
 
 @bp.route('/upload-pic/<int:passenger_id>', methods=['POST'])

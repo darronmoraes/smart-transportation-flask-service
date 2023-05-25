@@ -39,7 +39,7 @@ db.init_app(app)
 # Secret Key
 # app.config['SECRET_KEY'] = 'smarttransportationsystem2023'
 
-# Upload profile image
+# Upload profile image folder path
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Create a scheduler
