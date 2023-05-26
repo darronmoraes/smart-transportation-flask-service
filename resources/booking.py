@@ -539,12 +539,15 @@ def get_user_passes(passenger_id):
                 'price': p.price,
             })
 
-            return jsonify({
-                'success': True,
-                'result': pass_data,
-                'status': 200
-            }), 200
+    # if pass_data has passes than display in response
+    if pass_data:
+        return jsonify({
+            'success': True,
+            'result': pass_data,
+            'status': 200
+        }), 200
 
+    # Prompt to create a new pass
     return jsonify({
         'success': False,
         'message': 'create a new pass to view',
