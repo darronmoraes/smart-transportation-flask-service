@@ -27,7 +27,8 @@ def get_routes_info():
         destination = routeInfo.destination.name
 
         route_info_data = {
-            "id": routeInfo.route_id,
+            "id": routeInfo.id,
+            "route-id": routeInfo.route_id,
             "source": {
                 "id": routeInfo.source_id,
                 "name": source
