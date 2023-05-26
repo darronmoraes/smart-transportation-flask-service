@@ -537,6 +537,7 @@ def get_user_passes(passenger_id):
                 'valid-from': valid_from,
                 'valid-to': valid_to,
                 'price': p.price,
+                'usage-counter': p.usage_counter
             })
 
     # if pass_data has passes than display in response
