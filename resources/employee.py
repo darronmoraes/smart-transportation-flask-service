@@ -288,15 +288,19 @@ def driver_login_auth():
             'message': 'login successful',
             'session': {
                 'user': {
-                    'userId': user.id,
+                    'id': user.id,
                     'email': user.email,
                 },
-                'driver': {
+                'employee': {
+                    'id':employee.id,
                     'firstname': employee.firstname,
                     'lastname': employee.lastname,
                     'gender': employee.gender,
                     'employee-no': employee.employee_no,
-                    'license-no': driver.license_no
+                    'driver': {
+                        'id': driver.id,
+                        'license-no': driver.license_no
+                    }
                 },
                 'token': session.token,
         }}, 200
