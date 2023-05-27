@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request, session
 from db import db
 
+from datetime import datetime
+
 from models.location import Location
 from models.bus_schedules import BusSchedules
 
@@ -67,3 +69,43 @@ def update_location(schedule_id):
             'message': 'Driver not found for the bus schedule.',
             'status': 400
         }), 400
+    
+
+# API route to get live bus schedule locations
+@bp.route('/live_bus_locations', methods=['GET'])
+def get_live_bus_locations():
+    # Retrieve the current date
+    current_date = datetime.now().date()
+
+    # Query bus schedules for the current date
+    bus_schedules = BusSchedules.query.filter(BusSchedules.date == current_date).all()
+
+    live_locations = []
+
+    for bus_schedule in bus_schedules:
+        # Check if the bus has a location associated with it
+        if bus_schedule.location:
+            location = bus_schedule.location
+            latitude = location.lat
+            longitude = location.lng
+
+            live_location = {
+                'bus_schedule_id': bus_schedule.id,
+                'latitude': latitude,
+                'longitude': longitude
+            }
+
+            live_locations.append(live_location)
+
+    if not live_locations:
+        return jsonify({
+        'success': False,
+        'status': 400,
+        'message': 'No buses on schedule for the current date'
+    }), 400
+
+    return jsonify({
+        'success': True,
+        'status': 200,
+        'live_locations': live_locations
+    }), 200
