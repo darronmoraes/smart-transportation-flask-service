@@ -246,3 +246,57 @@ def get_all_drivers():
                         })
             
     return jsonify({'status': 200, 'employee': employees_list})
+
+
+# Driver employee login
+@bp.route("/driver-login", methods=["POST"])
+def driver_login_auth():
+    # request
+    email = request.json.get("email")
+    password = request.json.get("password")
+    ip_address = request.json.get("ipaddress")
+    # role = request.json.get("role")
+
+    # empty data check
+    if not email or not password:
+        return {"status": 400,
+                "message": "missing email or password"}, 400
+    
+    # Checks if not driver
+    employee = Employee.query.join(User).filter(User.email == email).first()
+    if not employee or not employee.role == 'driver':
+        return jsonify({"status": 400,
+                        "message": "Driver access only",
+                        "success": False
+                    }), 400
+
+    user = User.query.filter_by(email=email).first()
+    # check if user credentials are valid
+    if not user or not user.check_password(password):
+        return {"status": 401,
+                "message": "invalid email or password"}, 401
+
+    # create token on login
+    session = Session(user_id=user.id, ip_address=ip_address)
+    db.session.add(session)
+    db.session.commit()
+
+    employee = Employee.query.filter(Employee.user_id == user.id).first()
+    driver = Driver.query.filter(Driver.id == employee.driver_id).first()
+
+    return {'status': 200,
+            'message': 'login successful',
+            'session': {
+                'user': {
+                    'userId': user.id,
+                    'email': user.email,
+                },
+                'driver': {
+                    'firstname': employee.firstname,
+                    'lastname': employee.lastname,
+                    'gender': employee.gender,
+                    'employee-no': employee.employee_no,
+                    'license-no': driver.license_no
+                },
+                'token': session.token,
+        }}, 200
