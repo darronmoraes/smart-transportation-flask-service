@@ -21,7 +21,7 @@ def bus():
     for bus in buses:
         bus_list.append({'id': bus.id, 'rto-reg-no': bus.reg_no, 'capacity': bus.capacity, 'type': bus.type, 'status': bus.status})
     return jsonify({
-        'success': False,
+        'success': True,
         'status': 200,
         'result': bus_list}), 200
 

@@ -9,6 +9,7 @@ from models.route_info import RouteInfo
 from models.schedule import Schedule
 from models.bus_schedules import BusSchedules
 from models.route_type import RouteType
+from models.location import Location
 
 
 bp = Blueprint("route", __name__, url_prefix="/schedule")
@@ -327,6 +328,12 @@ def bus_schedule_available():
             # Query to filter departure and arrival stands by filter schedule model
             route = Route.query.filter_by(id=schedule.route_id).first()
 
+            # Get the location of the bus based on bus_schedule's location_id
+            location = Location.query.get(bus_schedule.location_id)
+            latitude = location.lat if location else None
+            longitude = location.lng if location else None
+            updated_at = location.updated_at if location else None
+
             available_bus_result = {
                 'schedule-info': {
                     'id': bus_schedule.id,
@@ -345,6 +352,12 @@ def bus_schedule_available():
                     'id': bus_schedule.bus.id,
                     'reg-no': bus_schedule.bus.reg_no,
                     'type': bus_schedule.bus.type
+                },
+                'location': {
+                    'id': bus_schedule.location_id,
+                    'lat': latitude,
+                    'lng': longitude,
+                    'updated-at': updated_at
                 }
             }
             available_buses.append(available_bus_result)
