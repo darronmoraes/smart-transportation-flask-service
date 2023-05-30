@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from db import db
 
-from datetime import datetime
+from datetime import datetime, date
 
 from models.route import Route
 from models.halts import Halts
@@ -10,6 +10,7 @@ from models.schedule import Schedule
 from models.bus_schedules import BusSchedules
 from models.route_type import RouteType
 from models.location import Location
+from models.employee import Employee
 
 
 bp = Blueprint("route", __name__, url_prefix="/schedule")
@@ -368,3 +369,94 @@ def bus_schedule_available():
         'results': available_buses
     }), 200
 
+
+# Api to get bus-schedule list for a given driver
+@bp.route('/driver-employee/<int:employee_id>/bus-schedules', methods=['GET'])
+def driver_bus_schedule(employee_id):
+    # Query through employee
+    employee = Employee.query.get(employee_id)
+    # Check if the employee exists
+    if not employee:
+        return jsonify({
+            'success': False,
+            'message': f'Employee with id {employee_id} does not exist',
+            'status': 410
+        }), 410
+    
+    # Check if employee has a driver role
+    if employee.role != 'driver':
+        return jsonify({
+            'success': False,
+            'message': f'Employee with id {employee_id} is not a driver',
+            'status': 409
+        }), 409
+    
+    
+    # Get the current date
+    current_date = date.today()
+    # current_date = '2023-05-30'
+    
+    # Query bus-schedule for given driver
+    bus_schedules = BusSchedules.query.filter(
+            BusSchedules.employee_id == employee_id,
+            BusSchedules.date == current_date
+        ).all()
+
+    # Check if bus-schedule is alloted to the driver
+    if not bus_schedules:
+        return jsonify({
+            'success': False,
+            'message': f'No buses alloted to {employee_id} for today',
+            'status': 400
+        }), 400
+    
+    available_driver_schedule = []
+
+    for bus_schedule in bus_schedules:
+        # check if employee is a driver and get the scheduled data
+        if employee.role == 'driver' and bus_schedule.employee_id == employee.id:
+            # Get the schedule object
+            schedule = Schedule.query.get(bus_schedule.schedule_id)
+
+            # Query to filter departure and arrival stands by filter schedule model
+            route = Route.query.filter_by(id=schedule.route_id).first()
+
+            # Get the location of the bus based on bus_schedule's location_id
+            location = Location.query.get(bus_schedule.location_id)
+            latitude = location.lat if location else None
+            longitude = location.lng if location else None
+            updated_at = location.updated_at if location else None
+
+            available_bus_result = {
+                'schedule-info': {
+                    'id': bus_schedule.id,
+                    'date': bus_schedule.date,
+                    'seats-available': bus_schedule.available_seats,
+                    'schedule': {
+                        'id': schedule.id,
+                        'departure': schedule.departure_at.strftime('%H:%M'),
+                        'arrival': schedule.arrival_at.strftime('%H:%M'),
+                        'duration': schedule.duration,
+                        'departure-stand': route.source_stand,
+                        'arrival-stand': route.destination_stand
+                    }
+                },
+                'bus': {
+                    'id': bus_schedule.bus.id,
+                    'reg-no': bus_schedule.bus.reg_no,
+                    'type': bus_schedule.bus.type
+                },
+                'location': {
+                    'id': bus_schedule.location_id,
+                    'lat': latitude,
+                    'lng': longitude,
+                    'updated-at': updated_at
+                }
+            }
+            available_driver_schedule.append(available_bus_result)
+
+    return jsonify({
+        'success': True,
+        'status': 200,
+        'results': available_driver_schedule
+    }), 200
