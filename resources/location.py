@@ -72,7 +72,7 @@ def update_location(schedule_id):
     
 
 # API route to get live bus schedule locations
-@bp.route('/live_bus_locations', methods=['GET'])
+@bp.route('/locations', methods=['GET'])
 def get_live_bus_locations():
     # Retrieve the current date
     current_date = datetime.now().date()
@@ -109,3 +109,54 @@ def get_live_bus_locations():
         'status': 200,
         'live_locations': live_locations
     }), 200
+
+
+
+# Bus Schedule location specific to Bus-schedule-id
+@bp.route('/locations/bus-schedule/<int:bus_schedule_id>', methods=['GET'])
+def live_bus_schedule_location(bus_schedule_id):
+
+    # Check if the bus schedule id exists in the model
+    bus_schedule = BusSchedules.query.get(bus_schedule_id)
+    if not bus_schedule:
+        return jsonify({
+            'success': False,
+            'message': f'Bus schedule with ID {bus_schedule_id} does not exist',
+            'status': 404
+        }), 404
+
+    # Retrieve the current date
+    current_date = datetime.now().date()
+    # current_date = '2023-05-30'
+
+    # Check if the bus schedule is for the current date 
+    # use .date.strftime() to compare with current date
+    if bus_schedule.date.strftime('%Y-%m-%d') != current_date:
+        return jsonify({
+            'success': False,
+            'message': f'Bus schedule with ID {bus_schedule_id} is not for the current date',
+            'status': 400
+        }), 400
+    
+    # Query the bus schedule's location
+    location = Location.query.get(bus_schedule.location_id)
+    if not location:
+        return jsonify({
+            'success': False,
+            'message': 'Location data not found',
+            'status': 404
+        }), 404
+    
+    # Construct response
+    response = {
+        'success': True,
+        'status': 200,
+        'location': {
+            'id': location.id,
+            'lat': location.lat,
+            'lng': location.lng,
+            'updated_at': location.updated_at
+        }
+    }
+
+    return jsonify(response), 200
