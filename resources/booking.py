@@ -108,7 +108,7 @@ def book_instant():
 
 
 # Api to get the booked ticket having current date
-@bp.route('/current-booked-ticket', methods=['GET'])
+@bp.route('/current-ticket/passenger', methods=['GET'])
 def get_current_booked_ticket():
     passenger_id = request.args.get('passenger-id')
     if not passenger_id:
@@ -119,7 +119,7 @@ def get_current_booked_ticket():
         }), 400
 
     current_date = date.today()
-    print(f"Current date: {current_date}")
+    # print(f"Current date: {current_date}")
     ticket = Ticket.query.filter(Ticket.status == 'Booked', func.date(Ticket.booked_at) == current_date, Ticket.passenger_id == passenger_id).first()
 
     if not ticket:
