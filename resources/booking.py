@@ -120,44 +120,47 @@ def get_current_booked_ticket():
 
     current_date = date.today()
     # print(f"Current date: {current_date}")
-    ticket = Ticket.query.filter(Ticket.status == 'Booked', func.date(Ticket.booked_at) == current_date, Ticket.passenger_id == passenger_id).first()
+    tickets = Ticket.query.filter(Ticket.status == 'Booked', func.date(Ticket.booked_at) == current_date, Ticket.passenger_id == passenger_id).all()
 
-    if not ticket:
+    if not tickets:
         return jsonify({
             'success': False,
             'message': 'No current booked ticket found',
             'status': 404
         }), 404
+    
+    ticket_result_data = []
+    for ticket in tickets:
+        source_stop = Halts.query.filter_by(id=ticket.source_id).first()
+        destination_stop = Halts.query.filter_by(id=ticket.destination_id).first()
+        bus_schedule_info = BusSchedules.query.filter_by(id=ticket.bus_schedule_id).first()
 
-    source_stop = Halts.query.filter_by(id=ticket.source_id).first()
-    destination_stop = Halts.query.filter_by(id=ticket.destination_id).first()
-    bus_schedule_info = BusSchedules.query.filter_by(id=ticket.bus_schedule_id).first()
-
-    ticket_data = {
-        'ticket': {
-            'id': ticket.id,
-            'booked-at': ticket.booked_at,
-            'total-fare-amount': ticket.total_fare_amount,
-            'distance-travelled': ticket.distance_travelled,
-            'passenger-count': ticket.passenger_count,
-            'status': ticket.status,
-            'source': source_stop.name,
-            'destination': destination_stop.name,
-        },
-        'schedule-info': {
-            'id': ticket.bus_schedule_id,
-            'date': bus_schedule_info.date.strftime('%Y-%m-%d')
-        },
-        'bus': {
-            'id': bus_schedule_info.bus.id,
-            'reg-no': bus_schedule_info.bus.reg_no,
-            'type': bus_schedule_info.bus.type
-        },
-    }
+        ticket_data = {
+            'ticket': {
+                'id': ticket.id,
+                'booked-at': ticket.booked_at,
+                'total-fare-amount': ticket.total_fare_amount,
+                'distance-travelled': ticket.distance_travelled,
+                'passenger-count': ticket.passenger_count,
+                'status': ticket.status,
+                'source': source_stop.name,
+                'destination': destination_stop.name,
+            },
+            'schedule-info': {
+                'id': ticket.bus_schedule_id,
+                'date': bus_schedule_info.date.strftime('%Y-%m-%d')
+            },
+            'bus': {
+                'id': bus_schedule_info.bus.id,
+                'reg-no': bus_schedule_info.bus.reg_no,
+                'type': bus_schedule_info.bus.type
+            },
+        }
+        ticket_result_data.append(ticket_data)
 
     return jsonify({
         'success': True,
-        'ticket': ticket_data,
+        'results': ticket_result_data,
         'status': 200
     }), 200
 
