@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, session, current_app, send_from_directory
+from flask import Blueprint, jsonify, request, session, current_app, send_from_directory, make_response, send_file
 import json
 from datetime import datetime
 # for file upload securely
@@ -78,6 +78,11 @@ def add_details():
             'dob': passenger.dob}}), 200
 
 
+# Route to upload passenger photo
+@bp.route('/upload-pic/<int:passenger_id>', methods=['POST'])
+@auth_middleware
+def upload_pic(passenger_id):
+    return home(current_app, passenger_id)
 
 # upload profile image function having app level permissions
 def home(app, passenger_id):
@@ -149,54 +154,33 @@ def home(app, passenger_id):
         'success': False}), 400
 
 
-@bp.route('/upload-pic/<int:passenger_id>', methods=['POST'])
+
+# Route to get the photo of passenger
+@bp.route('/file/pic/<passenger_id>', methods=['GET'])
 @auth_middleware
-def upload_pic(passenger_id):
-    return home(current_app, passenger_id)
+def get_profile_image(passenger_id):
+    return send_passenger_photo(current_app, passenger_id)
 
+def send_passenger_photo(app, passenger_id):
+    # Retrieve the passenger from the database based on the passenger_id
+    passenger = Passenger.query.get(passenger_id)
 
-# Retrieve Passenger Photo
-@bp.route('/get-profile-pic/<int:passenger_id>', methods=['GET'])
-@auth_middleware
-def get_profile_pic(passenger_id):
-    # check if passenger id is provided
-    if not passenger_id:
+    if not passenger or not passenger.photo:
+        # Handle the case when the passenger or image does not exist
         return jsonify({
-            'status': 401, 
-            'message': 'passenger-id not provided', 
-            'success': False}), 401
+            'status': 404,
+            'message': 'Image not found',
+            'success': False
+        }), 404
 
-    # Check if passenger exists in db
-    existing_passenger = Passenger.query.get(passenger_id)
-    if not existing_passenger:
-        return jsonify({
-            'status': 402, 
-            'message': 'passenger-id does not exists', 
-            'success': False}), 402
-    
-    if existing_passenger.photo:
-        # Construct the photo URL or data based on your requirements
-        photo_url = f"http://127.0.0.1:5000/{UPLOAD_FOLDER}/{existing_passenger.photo}"
+    # Assuming the uploaded images are stored in the UPLOAD_FOLDER
+    image_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], passenger.photo)
 
-        passenger = {
-            'id': existing_passenger.id,
-            'photo_url': photo_url,  # Include the photo URL or data in the response
-        }
+    # Create a response with the image file
+    response = make_response(send_file(image_path))
 
-        return jsonify({
-            'status': 200, 
-            'message': 'passenger photo retrieved successfully',
-            'passenger': passenger,
-            'success': True
-        }), 200
-    
-    return jsonify({
-        'status': 400, 
-        'message': 'Not Image found', 
-        'success': False}), 400
+    # Set the Content-Type header to specify the image mimetype
+    response.headers['Content-Type'] = 'image/jpeg'
 
-@bp.route('file/pic/<path:filename>', methods=['GET'])
-@auth_middleware
-def profile_pic(filename):
-    directory = current_app.config['UPLOAD_FOLDER']
-    return send_from_directory(directory, filename)
+    # Return the image file as a response
+    return response
