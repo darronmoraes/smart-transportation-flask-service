@@ -144,7 +144,8 @@ def home(app, passenger_id):
         return jsonify({
             'status': 200, 
             'message': 'Photo uploaded successfully',
-            'photo_url': photo_url,  # Include the photo URL or data in the response
+            'photo-url': photo_url,  # Include the photo URL or data in the response
+            'file-name': unique_filename,
             'success': True
         }), 200
 
