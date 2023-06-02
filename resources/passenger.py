@@ -139,7 +139,7 @@ def home(app, passenger_id):
         db.session.commit()
 
         # Construct the photo URL or data based on your requirements
-        photo_url = f"http://192.168.0.112:5000/file/pic/{unique_filename}"
+        photo_url = f"http://3.110.42.226/user/file/pic/{unique_filename}"
 
         return jsonify({
             'status': 200, 
@@ -154,8 +154,33 @@ def home(app, passenger_id):
         'success': False}), 400
 
 
+# Route to get the photo of passenger on filename
+@bp.route('/file/pic/<filename>', methods=['GET'])
+@auth_middleware
+def get_profile_image_filename(filename):
+    return get_filename_image(current_app, filename)
 
-# Route to get the photo of passenger
+def get_filename_image(app, filename):
+    # Retrieve the passenger from the database based on the passenger_id
+    passenger = Passenger.query.filter_by(photo=filename).first()
+
+    if not passenger:
+        # Handle the case when the passenger or image does not exist
+        return jsonify({
+            'status': 404,
+            'message': 'Image not found',
+            'success': False
+        }), 404
+
+    # Assuming the uploaded images are stored in the UPLOAD_FOLDER
+    image_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], passenger.photo)
+
+    # Return the image file as a response
+    return send_file(image_path, mimetype='image/jpeg')
+
+
+
+# Route to get the photo of passenger on passenger id
 @bp.route('/file/pic/<passenger_id>', methods=['GET'])
 @auth_middleware
 def get_profile_image(passenger_id):
