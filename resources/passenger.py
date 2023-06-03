@@ -157,7 +157,6 @@ def home(app, passenger_id):
 
 # Route to get the photo of passenger on filename
 @bp.route('/file/pic/<filename>', methods=['GET'])
-@auth_middleware
 def get_profile_image_filename(filename):
     return get_filename_image(current_app, filename)
 
