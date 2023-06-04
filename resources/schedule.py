@@ -112,15 +112,25 @@ def get_routes():
     routes = Route.query.all()
     routes_list = []
     for route in routes:
+        # Route source and destination names
+        source = route.source.name
+        destination = route.destination.name
         routes_list.append({
-            "route-id": route.id,
-            "source": route.source_stand,
-            "destination": route.destination_stand
+            'id': route.id,
+            'source': {
+                'id': route.source_id,
+                'name': source
+            },
+            'destination':  {
+                'id': route.destination_id,
+                'name': destination
+            }
         })
+
     return jsonify({
         'success': True,
         'status': 200,
-        'result': routes_list }), 200
+        'routes': routes_list }), 200
 
 
 
