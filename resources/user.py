@@ -108,7 +108,8 @@ def login():
         'address': passenger.address,
         'category': passenger.category,
         'gender': passenger.gender,
-        'dob': passenger.dob
+        'dob': passenger.dob,
+        'file-name': passenger.photo
     }
 
     # api response
