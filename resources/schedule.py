@@ -309,13 +309,24 @@ def get_schedules():
         # convert date
         departure = schedule.departure_at.strftime('%H:%M')
         arrival = schedule.arrival_at.strftime('%H:%M')
+
+        # source and destination
+        source_id = schedule.route.source_id
+        destination_id = schedule.route.destination_id
+
+        # Retrieve names of source and destination halts
+        source_halt = Halts.query.get(source_id)
+        destination_halt = Halts.query.get(destination_id)
+
         schedules_list.append({
             "id": schedule.id,
             "departure-at": departure,
             "arrival-at": arrival,
             "duration": schedule.duration,
-            "route-source": schedule.route.source_stand,
-            "route-destination": schedule.route.destination_stand,
+            "source-id": source_id,
+            "source": source_halt.name,
+            'destination-id': destination_id,
+            "destination": destination_halt.name,
         })
     return jsonify({
             'success': True,
