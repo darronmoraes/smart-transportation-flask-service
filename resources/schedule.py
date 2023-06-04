@@ -60,16 +60,16 @@ def get_routes_info():
 @bp.route("/add-route", methods=["POST"])
 def add_route():
     # get source and destination
-    source = request.json.get("source")
-    destination = request.json.get("destination")
+    source_id = request.json.get("source-id")
+    destination_id = request.json.get("destination-id")
 
-    if not source or not destination:
+    if not source_id or not destination_id:
         return jsonify({
             'success': False,
             'message': 'source and destination are required to create a route',
             'status': 400}), 400
     
-    existing_route = Route.query.filter_by(source_stand=source, destination_stand=destination).first()
+    existing_route = Route.query.filter_by(source_id=source_id, destination_id=destination_id).first()
     if existing_route:
         return jsonify({
             'success': False,
@@ -77,18 +77,32 @@ def add_route():
             'status': 405}), 400
     
     # create new route
-    new_route = Route(source_stand=source, destination_stand=destination)
+    new_route = Route(source_id=source_id, destination_id=destination_id)
     db.session.add(new_route)
     db.session.commit()
+
+    source = new_route.source.name
+    destination = new_route.destination.name
+
+    route_data = {
+        'id': new_route.id,
+        'source': {
+            'id': new_route.source_id,
+            'name': source
+        },
+        'destination': {
+            'id': new_route.destination_id,
+            'name': destination
+        }
+    }
 
     # return route added successfully
     return jsonify({
         'success': True,
         'message': 'route added successfully',
         'status': 200,
-        'result': {'route-id': new_route.id,
-                        'source': new_route.source_stand,
-                        'destination': new_route.destination_stand}}), 200
+        'route': route_data
+        }), 200
 
 
 
