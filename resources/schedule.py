@@ -363,6 +363,12 @@ def bus_schedule_available():
 
             # Query to filter departure and arrival stands by filter schedule model
             route = Route.query.filter_by(id=schedule.route_id).first()
+            # get the source and destination stands from the route info
+            source_stand_id = route.source_id
+            destination_stand_id = route.destination_id
+            # get source and destination from halts
+            source = Halts.query.get(source_stand_id)
+            destination = Halts.query.get(destination_stand_id)
 
             # Get the location of the bus based on bus_schedule's location_id
             location = Location.query.get(bus_schedule.location_id)
@@ -380,8 +386,8 @@ def bus_schedule_available():
                         'departure': schedule.departure_at.strftime('%H:%M'),
                         'arrival': schedule.arrival_at.strftime('%H:%M'),
                         'duration': schedule.duration,
-                        'departure-stand': route.source_stand,
-                        'arrival-stand': route.destination_stand
+                        'departure-stand': source.name,
+                        'arrival-stand': destination.name
                     }
                 },
                 'bus': {
@@ -455,6 +461,12 @@ def driver_bus_schedule(employee_id):
 
             # Query to filter departure and arrival stands by filter schedule model
             route = Route.query.filter_by(id=schedule.route_id).first()
+            # get the source and destination stands from the route info
+            source_stand_id = route.source_id
+            destination_stand_id = route.destination_id
+            # get source and destination from halts
+            source = Halts.query.get(source_stand_id)
+            destination = Halts.query.get(destination_stand_id)
 
             # Get the location of the bus based on bus_schedule's location_id
             location = Location.query.get(bus_schedule.location_id)
@@ -472,8 +484,8 @@ def driver_bus_schedule(employee_id):
                         'departure': schedule.departure_at.strftime('%H:%M'),
                         'arrival': schedule.arrival_at.strftime('%H:%M'),
                         'duration': schedule.duration,
-                        'departure-stand': route.source_stand,
-                        'arrival-stand': route.destination_stand
+                        'departure-stand': source.name,
+                        'arrival-stand': destination.name
                     }
                 },
                 'bus': {
