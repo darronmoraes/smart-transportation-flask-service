@@ -68,9 +68,12 @@ def book_instant():
     db.session.commit()
 
 
-    # get source and destination stands name
-    source_stand = new_instant_booking.bus_schedule.schedule.route.source_stand
-    destination_stand = new_instant_booking.bus_schedule.schedule.route.destination_stand
+    # get source and destination stands name from route
+    route = new_instant_booking.bus_schedule.schedule.route
+    source_id = route.source_id
+    destination_id = route.destination_id
+    source = Halts.query.get(source_id)
+    destination = Halts.query.get(destination_id)
 
     # return registration success
     return jsonify({
@@ -95,9 +98,9 @@ def book_instant():
                 'schedule': {
                     'id': new_instant_booking.bus_schedule.schedule.id,
                     'departure': new_instant_booking.bus_schedule.schedule.departure_at.strftime('%H:%M'),
-                    'departure-stand': source_stand,
+                    'departure-stand': source.name,
                     'arrival': new_instant_booking.bus_schedule.schedule.arrival_at.strftime('%H:%M'),
-                    'arrival-stand': destination_stand,
+                    'arrival-stand': destination.name,
                     'duration': new_instant_booking.bus_schedule.schedule.duration,
                 },
                 'date': new_instant_booking.bus_schedule.date.strftime('%Y-%m-%d'),
