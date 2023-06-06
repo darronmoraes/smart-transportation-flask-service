@@ -358,10 +358,13 @@ def bus_available_search():
 
     for bus_schedule in bus_schedules:
         # get the route information from the schedule
-        route_stand = bus_schedule.schedule.route
+        route = bus_schedule.schedule.route
         # get the source and destination stands from the route info
-        source_stand = route_stand.source_stand
-        destination_stand = route_stand.destination_stand
+        source_stand_id = route.source_id
+        destination_stand_id = route.destination_id
+        # get source and destination from halts
+        source = Halts.query.get(source_stand_id)
+        destination = Halts.query.get(destination_stand_id)
 
         # query halts table to get source and destination names
         source_halt = Halts.query.get(source_id)
@@ -377,8 +380,8 @@ def bus_available_search():
                     'departure': bus_schedule.schedule.departure_at.strftime('%H:%M'),
                     'arrival': bus_schedule.schedule.arrival_at.strftime('%H:%M'),
                     'duration': bus_schedule.schedule.duration,
-                    'departure-stand': source_stand,
-                    'arrival-stand': destination_stand
+                    'departure-stand': source.name,
+                    'arrival-stand': destination.name
                 }
             },
             'bus': {
