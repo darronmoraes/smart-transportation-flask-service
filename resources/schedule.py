@@ -17,6 +17,51 @@ bp = Blueprint("route", __name__, url_prefix="/schedule")
 
 
 
+# HALT model POST request API route
+@bp.route("/add-halt", methods=["POST"])
+def add_halt():
+    # get source and destination
+    name = request.json.get("name")
+    longitude = request.json.get("longitude")
+    latitude = request.json.get("latitude")
+
+    if not longitude or not latitude:
+        return jsonify({
+            'success': False,
+            'message': 'longitutde and destination are required to create a source',
+            'status': 400}), 400
+    
+    if not name:
+        return jsonify({
+            'success': False,
+            'message': 'source name is required to create a source',
+            'status': 400}), 400
+    
+    existing_source = Halts.query.filter_by(name=name).first()
+    if existing_source:
+        return jsonify({
+            'success': False,
+            'message': 'source already exists',
+            'status': 400}), 400
+    
+    # create new route
+    new_source = Halts(name=name, longitude=longitude, latitude=latitude)
+    db.session.add(new_source)
+    db.session.commit()
+
+    # return route added successfully
+    return jsonify({
+        'success': True,
+        'message': 'source added successfully',
+        'status': 200,
+        'result': {'source-id': new_source.id,
+                        'source-name': new_source.name,
+                        'long': new_source.longitude,
+                        'lat': new_source.latitude
+                }}), 200
+
+
+# ROUTE-INFO model GET request API route
 @bp.route("/route-info", methods=["GET"])
 def get_routes_info():
     # query to join route_info on route to get all details of routes-info
@@ -57,6 +102,11 @@ def get_routes_info():
         }), 200
 
 
+# ROUTE-INFO model DELETE API route
+
+
+
+# ROUTE model POST request API route
 @bp.route("/add-route", methods=["POST"])
 def add_route():
     # get source and destination
@@ -105,7 +155,7 @@ def add_route():
         }), 200
 
 
-
+# ROUTE model GET API route
 @bp.route("/route", methods=["GET"])
 def get_routes():
     # query to join route_info and route to get all details of driver
@@ -133,47 +183,42 @@ def get_routes():
         'routes': routes_list }), 200
 
 
+# ROUTE model DELETE API route
+@bp.route("/route/<int:route_id>", methods=['DELETE'])
+def delete_route(route_id):
+    # Check if route exists
+    route = Route.query.get(route_id)
+    if not route:
+        return jsonify({
+        'success': False,
+        'message': 'Route not found',
+        'status': 400
+        }), 400
+    
+    # Find associated schedules with the route
+    associated_schedules = Schedule.query.filter_by(route_id=route_id).all()
+    
+    # Find bus schedules associated with the found schedules
+    bus_schedules = BusSchedules.query.filter(BusSchedules.schedule_id.in_([Schedule.id for schedule in associated_schedules])).all()
 
-@bp.route("/add-halt", methods=["POST"])
-def add_halt():
-    # get source and destination
-    name = request.json.get("name")
-    longitude = request.json.get("longitude")
-    latitude = request.json.get("latitude")
+    # Delete the bus schedules associated with the schedules
+    for bus_schedule in bus_schedules:
+        db.session.delete(bus_schedule)
 
-    if not longitude or not latitude:
-        return jsonify({
-            'success': False,
-            'message': 'longitutde and destination are required to create a source',
-            'status': 400}), 400
+    # Delete the schedules associated with the route
+    for schedule in associated_schedules:
+        db.session.delete(schedule)
+
     
-    if not name:
-        return jsonify({
-            'success': False,
-            'message': 'source name is required to create a source',
-            'status': 400}), 400
-    
-    existing_source = Halts.query.filter_by(name=name).first()
-    if existing_source:
-        return jsonify({
-            'success': False,
-            'message': 'source already exists',
-            'status': 400}), 400
-    
-    # create new route
-    new_source = Halts(name=name, longitude=longitude, latitude=latitude)
-    db.session.add(new_source)
+    # Delete the route
+    db.session.delete(route)
     db.session.commit()
 
-    # return route added successfully
     return jsonify({
         'success': True,
-        'message': 'source added successfully',
-        'status': 200,
-        'result': {'source-id': new_source.id,
-                        'source-name': new_source.name,
-                        'long': new_source.longitude,
-                        'lat': new_source.latitude}}), 200
+        'message': 'Route deleted successfully',
+        'status': 200
+        }), 200
 
 
 
