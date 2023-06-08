@@ -27,13 +27,39 @@ bp = Blueprint("passenger", __name__, url_prefix="/user")
 
 
 # Route to get passenger data **only for testing**
-@bp.route("/passenger", methods=["GET", "POST"])
+@bp.route("/passenger", methods=['GET'])
 def get_passengers():
     passengers = Passenger.query.all()
+    
     passenger_list = []
     for passenger in passengers:
-        passenger_list.append({'id': passenger.id, 'user': {'firstname': passenger.firstname, 'lastname': passenger.lastname, 'userId': passenger.user_id, 'photo': passenger.photo}})
-    return jsonify(passenger_list)
+        # Filter passenger user data
+        user = User.query.get(passenger.user_id)
+
+        passenger_data = {
+            'passenger': {
+                'id': passenger.id,
+                'first-name': passenger.firstname,
+                'last-name': passenger.lastname,
+                'contact': passenger.contact,
+                'address': passenger.address,
+                'category': passenger.category,
+                'gender': passenger.gender,
+                'dob': passenger.dob,
+                'photo': passenger.photo
+            },
+            'user': {
+                'id': user.id,
+                'email': user.email
+            }
+        }
+        passenger_list.append(passenger_data)
+
+    return jsonify({
+        'passengers': passenger_list,
+        'status': 200,
+        'success': True
+    }), 200
 
 
 # Route to add  Passenger data request
