@@ -410,6 +410,56 @@ def bus_available_search():
     }), 200
 
 
+# API request to get passenger ticket details on-boarded on the bus-Schedule
+@bp.route('/bus-schedule/<bus_schedule_id>/tickets', methods=['GET'])
+def get_tickets_for_bus_schedule(bus_schedule_id):
+    # Query the Ticket model to retrieve tickets for the specific Bus Schedule
+    tickets = Ticket.query.filter_by(bus_schedule_id=bus_schedule_id).all()
+
+    # Store the list of ticket details in ticket_date array
+    ticket_data_list = []
+    for ticket in tickets:
+        source_halt = ticket.source.name
+        destination_halt = ticket.destination.name
+
+        # Retrieve the passenger data for the ticket
+        passenger = Passenger.query.get(ticket.passenger_id)
+        passenger_data = {
+            'id': passenger.id,
+            'first_name': passenger.firstname,
+            'last_name': passenger.lastname,
+            'category': passenger.category,
+            'gender': passenger.gender
+        }
+
+        ticket_data = {
+            'id': ticket.id,
+            'booked_at': ticket.booked_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'fare-amount': ticket.total_fare_amount,
+            'distance-travelled': ticket.distance_travelled,
+            'passenger-count': ticket.passenger_count,
+            'status': ticket.status,
+            'source': source_halt,
+            'destination': destination_halt,
+        }
+
+        result = {
+            'ticket': ticket_data,
+            'passenger': passenger_data
+        }
+
+        # Add the ticket data to the list
+        ticket_data_list.append(result)
+
+    # Return the ticket details in the response
+    return jsonify({
+        'success': True,
+        'tickets': ticket_data_list,
+        'status': 200
+    }), 200
+
+
+
 
 """
 Pass Booking Api's requests
