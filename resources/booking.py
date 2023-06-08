@@ -533,21 +533,32 @@ def get_user_passes(passenger_id):
             valid_from = p.valid_from.strftime('%Y-%m-%d')
             valid_to = p.valid_to.strftime('%Y-%m-%d')
 
-            # route info source and destination query
-            route_info = p.route_info
-            source = route_info.source.name
-            destination = route_info.destination.name
 
-            pass_data.append({
-                'id': p.id,
-                'source': source,
-                'destination': destination,
-                'status': p.status,
-                'valid-from': valid_from,
-                'valid-to': valid_to,
-                'price': p.price,
-                'usage-counter': p.usage_counter
-            })
+            # route info source and destination query
+            route_info_id = p.route_info_id
+            route_info = RouteInfo.query.get(route_info_id)
+
+            # Check if route-info exists
+            if route_info:
+
+                # Filter route-info for route
+                source_id = route_info.source_id
+                destination_id = route_info.destination_id
+
+                # Retrieve names of source and destination halts
+                source_halt = Halts.query.get(source_id)
+                destination_halt = Halts.query.get(destination_id)
+
+                pass_data.append({
+                    'id': p.id,
+                    'source': source_halt.name,
+                    'destination': destination_halt.name,
+                    'status': p.status,
+                    'valid-from': valid_from,
+                    'valid-to': valid_to,
+                    'price': p.price,
+                    'usage-counter': p.usage_counter
+                })
 
     # if pass_data has passes than display in response
     if pass_data:
