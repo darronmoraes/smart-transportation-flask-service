@@ -330,6 +330,7 @@ def delete_route_info(route_info_id):
         }), 200
 
 
+# SCHEDULE model POST request API route
 @bp.route("/add-schedule", methods=["POST"])
 def create_schedule():
     # get departure and  arrival time and duration with route-id 
@@ -376,7 +377,7 @@ def create_schedule():
                      'arrival-time': arrival,
                      'duration': new_schedule.duration,}}), 200
 
-
+# SCHEDULE model GET request API route
 @bp.route("/schedules", methods=["GET"])
 def get_schedules():
     # query to join route_info and route to get all details of driver
@@ -412,7 +413,29 @@ def get_schedules():
             'status': 200}), 200
 
 
-        
+# SCHEDULE model DELETE request API route
+@bp.route("/schedules/<int:schedule_id>", methods=['DELETE'])
+def delete_schedule(schedule_id):
+    # Check if schedule exists
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({
+            'success': False,
+            'message': 'Schedule not found',
+            'status': 400
+        }), 400
+
+    # Delete the schedule
+    db.session.delete(schedule)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Schedule deleted successfully',
+        'status': 200
+    }), 200
+
+
 # get all bus schedules for a given date
 @bp.route('/search', methods=['GET'])
 def bus_schedule_available():
