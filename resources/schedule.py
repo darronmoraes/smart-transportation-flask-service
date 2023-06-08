@@ -263,7 +263,7 @@ def create_dynamic_routes():
 
 # ROUTE-INFO model GET request API route
 @bp.route("/route-info", methods=["GET"])
-def get_routes_info():
+def get_route_info():
     # query to join route_info on route to get all details of routes-info
     routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
     routes_info_list = []
@@ -300,6 +300,52 @@ def get_routes_info():
         'status': 200,
         'success': True
         }), 200
+
+# ROUTE-INFO List having route-id GET api request
+@bp.route("/routes-info", methods=['GET'])
+def get_routes_info():
+    # query to join route_info on route to get all details of routes-info
+    routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
+    routes_info_list = []
+    
+    for routeInfo in routesInfo:
+        # query route-info source and destination
+        source = routeInfo.source.name
+        destination = routeInfo.destination.name
+
+        route_info_data = {
+            "id": routeInfo.id,
+            "route-id": routeInfo.route_id,
+            "source": {
+                "id": routeInfo.source_id,
+                "name": source
+            },
+            "destination": {
+                "id": routeInfo.destination_id,
+                "name": destination
+            },
+            "distance": routeInfo.distance,
+            "fare": routeInfo.fare
+        }
+        
+        # # Add route-type data if available
+        # if routeInfo.route_type and routeInfo.route_type.type:
+        #     route_info_data["type"] = routeInfo.route_type.type
+
+        # query if route-info has route-type data and add to route-info-data
+        route_type = db.session.query(RouteType).filter_by(route_info_id=routesInfo.id).first()
+        if route_type and route_type.type:
+            route_info_data["type"] = route_type.type
+
+        # append route-info-list with route-info-data
+        routes_info_list.append(route_info_data)
+    
+    return jsonify({
+        'result': routes_info_list,
+        'status': 200,
+        'success': True
+    }), 200
+
 
 
 # ROUTE-INFO model DELETE API route
