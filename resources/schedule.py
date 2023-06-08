@@ -61,50 +61,6 @@ def add_halt():
                 }}), 200
 
 
-# ROUTE-INFO model GET request API route
-@bp.route("/route-info", methods=["GET"])
-def get_routes_info():
-    # query to join route_info on route to get all details of routes-info
-    routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
-    routes_info_list = []
-    for routeInfo in routesInfo:
-
-        # query route-info source and destination
-        source = routeInfo.source.name
-        destination = routeInfo.destination.name
-
-        route_info_data = {
-            "id": routeInfo.id,
-            "route-id": routeInfo.route_id,
-            "source": {
-                "id": routeInfo.source_id,
-                "name": source
-            },
-            "destination": {
-                "id": routeInfo.destination_id,
-                "name": destination
-            },
-            "distance": routeInfo.distance,
-            "fare": routeInfo.fare
-        }
-
-        # query if route-info has route-type data and add to route-info-data
-        route_type = db.session.query(RouteType).filter_by(route_info_id=routeInfo.id).first()
-        if route_type and route_type.type:
-            route_info_data["type"] = route_type.type
-
-        # append route-info-list with route-info-data
-        routes_info_list.append(route_info_data)
-    return jsonify({
-        'result': routes_info_list,
-        'status': 200,
-        'success': True
-        }), 200
-
-
-# ROUTE-INFO model DELETE API route
-
-
 
 # ROUTE model POST request API route
 @bp.route("/add-route", methods=["POST"])
@@ -201,6 +157,9 @@ def delete_route(route_id):
     # Find bus schedules associated with the found schedules
     bus_schedules = BusSchedules.query.filter(BusSchedules.schedule_id.in_([Schedule.id for schedule in associated_schedules])).all()
 
+    # Find associated route-info with the route
+    associated_route_info = RouteInfo.query.filter_by(route_id=route_id).all()
+
     # Delete the bus schedules associated with the schedules
     for bus_schedule in bus_schedules:
         db.session.delete(bus_schedule)
@@ -208,6 +167,10 @@ def delete_route(route_id):
     # Delete the schedules associated with the route
     for schedule in associated_schedules:
         db.session.delete(schedule)
+
+    # Delete the associated route-info with the route
+    for route_info in associated_route_info:
+        db.session.delete(route_info)
 
     
     # Delete the route
@@ -221,7 +184,7 @@ def delete_route(route_id):
         }), 200
 
 
-
+# ROUTE-INFO model POST request API call
 @bp.route("/add-route-info", methods=["POST"])
 def create_dynamic_routes():
     # get source and destination
@@ -254,9 +217,11 @@ def create_dynamic_routes():
             'status': 400}), 400
     
     # check if route with source name exists
-    existing_route_info = db.session.query(Halts)\
-        .join(RouteInfo, Halts.id == RouteInfo.source_id)\
-        .filter(Halts.id == source_id).first()
+    # existing_route_info = db.session.query(Halts)\
+    #     .join(RouteInfo, Halts.id == RouteInfo.source_id)\
+    #     .filter(Halts.id == source_id).first()
+    # Check if route with same source and destination exists
+    existing_route_info = db.session.query(RouteInfo).filter_by(route_id=route_id, source_id=source_id, destination_id=destination_id).first()
     if existing_route_info:
         return jsonify({
             'success': False,
@@ -296,7 +261,76 @@ def create_dynamic_routes():
                     'fare': new_route_info.fare}}), 200
 
 
+# ROUTE-INFO model GET request API route
+@bp.route("/route-info", methods=["GET"])
+def get_routes_info():
+    # query to join route_info on route to get all details of routes-info
+    routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
+    routes_info_list = []
+    for routeInfo in routesInfo:
 
+        # query route-info source and destination
+        source = routeInfo.source.name
+        destination = routeInfo.destination.name
+
+        route_info_data = {
+            "id": routeInfo.id,
+            "route-id": routeInfo.route_id,
+            "source": {
+                "id": routeInfo.source_id,
+                "name": source
+            },
+            "destination": {
+                "id": routeInfo.destination_id,
+                "name": destination
+            },
+            "distance": routeInfo.distance,
+            "fare": routeInfo.fare
+        }
+
+        # query if route-info has route-type data and add to route-info-data
+        route_type = db.session.query(RouteType).filter_by(route_info_id=routeInfo.id).first()
+        if route_type and route_type.type:
+            route_info_data["type"] = route_type.type
+
+        # append route-info-list with route-info-data
+        routes_info_list.append(route_info_data)
+    return jsonify({
+        'result': routes_info_list,
+        'status': 200,
+        'success': True
+        }), 200
+
+
+# ROUTE-INFO model DELETE API route
+@bp.route("/route-info/<int:route_info_id>", methods=['DELETE'])
+def delete_route_info(route_info_id):
+    # Check it route-info exists
+    route_info = RouteInfo.query.get(route_info_id)
+    if not route_info:
+        return jsonify({
+        'success': False,
+        'message': 'Route-Info not found',
+        'status': 400
+        }), 400
+    
+    # Delete the associated route-type, if it exists
+    route_type = RouteType.query.filter_by(route_info_id=route_info.id).first()
+    if route_type:
+        db.session.delete(route_type)
+
+    # Delete the route-info
+    db.session.delete(route_info)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Route-Info deleted successfully',
+        'status': 200
+        }), 200
+
+
+# SCHEDULE model POST request API route
 @bp.route("/add-schedule", methods=["POST"])
 def create_schedule():
     # get departure and  arrival time and duration with route-id 
@@ -343,7 +377,7 @@ def create_schedule():
                      'arrival-time': arrival,
                      'duration': new_schedule.duration,}}), 200
 
-
+# SCHEDULE model GET request API route
 @bp.route("/schedules", methods=["GET"])
 def get_schedules():
     # query to join route_info and route to get all details of driver
@@ -379,7 +413,29 @@ def get_schedules():
             'status': 200}), 200
 
 
-        
+# SCHEDULE model DELETE request API route
+@bp.route("/schedules/<int:schedule_id>", methods=['DELETE'])
+def delete_schedule(schedule_id):
+    # Check if schedule exists
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({
+            'success': False,
+            'message': 'Schedule not found',
+            'status': 400
+        }), 400
+
+    # Delete the schedule
+    db.session.delete(schedule)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Schedule deleted successfully',
+        'status': 200
+    }), 200
+
+
 # get all bus schedules for a given date
 @bp.route('/search', methods=['GET'])
 def bus_schedule_available():

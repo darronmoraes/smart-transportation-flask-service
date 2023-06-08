@@ -13,8 +13,8 @@ from models.employee import Employee
 bp = Blueprint("bus", __name__, url_prefix="/bus")
 
 
-
-@bp.route("/bus", methods=["GET", "POST"])
+# BUS GET request api
+@bp.route("/bus", methods=['GET'])
 def bus():
     buses = Bus.query.all()
     bus_list = []
@@ -25,7 +25,7 @@ def bus():
         'status': 200,
         'result': bus_list}), 200
 
-
+# BUS POST request api
 @bp.route("/add-bus-details", methods=["POST"])
 def bus_details():
     reg_no = request.json.get("register-no")
@@ -58,6 +58,39 @@ def bus_details():
         'success': True,
         'message': 'bus registered successfully',
         'status': 200}), 200
+
+
+# BUS PUT request API route to update bus details
+@bp.route('/bus-details/<int:bus_id>', methods=['PUT'])
+def update_bus_details(bus_id):
+    # Check if bus exists
+    bus = Bus.query.get(bus_id)
+    if not bus:
+        return jsonify({
+            'success': False,
+            'message': 'Bus not found',
+            'status': 400
+        }), 400
+    
+    # Update bus details
+    bus_type = request.json.get("type")
+    status = request.json.get("status")
+
+    # Update bus type if provided
+    if bus_type:
+        bus.type = bus_type
+
+    # Update bus status if provided
+    if status:
+        bus.status = status
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Bus details updated successfully',
+        'status': 200
+    }), 200
 
 
 @bp.route("/add-bus-schedule", methods=["POST"])

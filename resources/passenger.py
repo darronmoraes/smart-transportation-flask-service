@@ -26,7 +26,7 @@ from consts import UPLOAD_FOLDER
 bp = Blueprint("passenger", __name__, url_prefix="/user")
 
 
-
+# Route to get passenger data **only for testing**
 @bp.route("/passenger", methods=["GET", "POST"])
 def get_passengers():
     passengers = Passenger.query.all()
@@ -36,7 +36,7 @@ def get_passengers():
     return jsonify(passenger_list)
 
 
-
+# Route to add  Passenger data request
 @bp.route("/add-passenger-details", methods=["POST"])
 @auth_middleware
 def add_details():
@@ -76,6 +76,69 @@ def add_details():
             'category': passenger.category,
             'gender': passenger.gender,
             'dob': passenger.dob}}), 200
+
+
+# Route to Update passenger data
+@bp.route("/passenger-details/<int:passenger_id>", methods=["PUT"])
+# @auth_middleware
+def update_passenger_details(passenger_id):
+    # Check if passenger exists
+    passenger = Passenger.query.get(passenger_id)
+    if not passenger:
+        return jsonify({
+            'success': False,
+            'message': 'Passenger not found',
+            'status': 400
+        }), 400
+    
+    # Update passenger details
+    firstname = request.json.get("firstname")
+    lastname = request.json.get("lastname")
+    contact = request.json.get("contact")
+    address = request.json.get("address")
+    gender = request.json.get("gender")
+    dob = request.json.get("dob")
+
+    # Update firstname if provided
+    if firstname:
+        passenger.firstname = firstname
+
+    # Update lastname if provided
+    if lastname:
+        passenger.lastname = lastname
+
+    # Update contact if provided
+    if contact:
+        passenger.contact = contact
+
+    # Update address if provided
+    if address:
+        passenger.address = address
+
+    # Update gender if provided
+    if gender:
+        passenger.gender = gender
+
+    # Update dob if provided
+    if dob:
+        passenger.dob = dob
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Passenger details updated successfully',
+        'status': 200,
+        'passenger': {
+            'id': passenger.id,
+            'firstname': passenger.firstname,
+            'lastname': passenger.lastname,
+            'contact': passenger.contact,
+            'address': passenger.address,
+            'gender': passenger.gender,
+            'dob': passenger.dob
+        }
+    }), 200
 
 
 # Route to upload passenger photo
