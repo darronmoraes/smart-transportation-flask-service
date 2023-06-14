@@ -302,9 +302,66 @@ def get_route_info():
         }), 200
 
 
-# Route-Info list having route-id
+# # Route-Info list having route-id
+# @bp.route("/routes-info/<int:route_id>", methods=['GET'])
+# def get_routes_info(route_id):
+#     routesInfo = RouteInfo.query.filter_by(route_id=route_id).all()
+#     if not routesInfo:
+#         return jsonify({
+#             'message': 'Route info not found',
+#             'status': 404,
+#             'success': False
+#         }), 404
+
+#     routes_info_list = []
+    
+#     for routeInfo in routesInfo:
+#         # Route-Info route
+#         source_id = routeInfo.route.source_id
+#         destination_id = routeInfo.route.destination_id
+#         # Retrieve names of source and destination halts
+#         source_halt = Halts.query.get(source_id)
+#         destination_halt = Halts.query.get(destination_id)
+
+#         # Route-Info source and destination
+#         source = routeInfo.source.name
+#         destination = routeInfo.destination.name
+
+#         route_info_data = {
+#             "id": routeInfo.id,
+#             "route": {
+#                 'id': routeInfo.route_id,
+#                 'source': source_halt.name,
+#                 'destination': destination_halt.name
+#             },
+#             "source": {
+#                 "id": routeInfo.source_id,
+#                 "name": source
+#             },
+#             "destination": {
+#                 "id": routeInfo.destination_id,
+#                 "name": destination
+#             },
+#             "distance": routeInfo.distance,
+#             "fare": routeInfo.fare
+#         }
+
+#         route_type = db.session.query(RouteType).join(RouteInfo, RouteType.route_info_id == RouteInfo.id).filter(RouteInfo.id == routeInfo.id).first()
+#         if route_type and route_type.type:
+#             route_info_data["type"] = route_type.type
+
+#         routes_info_list.append(route_info_data)
+    
+#     return jsonify({
+#         'result': routes_info_list,
+#         'status': 200,
+#         'success': True
+#     }), 200
+
+
+# RouteInfo for a particular given route
 @bp.route("/routes-info/<int:route_id>", methods=['GET'])
-def get_routes_info(route_id):
+def get_route_routes_info(route_id):
     routesInfo = RouteInfo.query.filter_by(route_id=route_id).all()
     if not routesInfo:
         return jsonify({
@@ -313,22 +370,32 @@ def get_routes_info(route_id):
             'success': False
         }), 404
 
-    routes_info_list = []
-    
-    for routeInfo in routesInfo:
-        source = routeInfo.source.name
-        destination = routeInfo.destination.name
+    routeInfo = routesInfo[0]  # Assuming all routes have the same source and destination
+    source_id = routeInfo.route.source_id
+    destination_id = routeInfo.route.destination_id
+    source_halt = Halts.query.get(source_id)
+    destination_halt = Halts.query.get(destination_id)
+    source_halt_name = source_halt.name
+    destination_halt_name = destination_halt.name
 
+    route_response_data = {
+        'id': routeInfo.route_id,
+        'source': source_halt_name,
+        'destination': destination_halt_name
+    }
+
+    # Iteration for all the route routes-info
+    routes_info_response = []
+    for routeInfo in routesInfo:
         route_info_data = {
             "id": routeInfo.id,
-            "route-id": routeInfo.route_id,
             "source": {
                 "id": routeInfo.source_id,
-                "name": source
+                "name": routeInfo.source.name
             },
             "destination": {
                 "id": routeInfo.destination_id,
-                "name": destination
+                "name": routeInfo.destination.name
             },
             "distance": routeInfo.distance,
             "fare": routeInfo.fare
@@ -338,10 +405,11 @@ def get_routes_info(route_id):
         if route_type and route_type.type:
             route_info_data["type"] = route_type.type
 
-        routes_info_list.append(route_info_data)
-    
+        routes_info_response.append(route_info_data)
+
     return jsonify({
-        'result': routes_info_list,
+        'route': route_response_data,
+        'routes-info': routes_info_response,
         'status': 200,
         'success': True
     }), 200
