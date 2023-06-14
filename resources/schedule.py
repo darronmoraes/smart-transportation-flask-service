@@ -301,15 +301,21 @@ def get_route_info():
         'success': True
         }), 200
 
-# ROUTE-INFO List having route-id GET api request
-@bp.route("/routes-info", methods=['GET'])
-def get_routes_info():
-    # query to join route_info on route to get all details of routes-info
-    routesInfo = RouteInfo.query.join(Route, RouteInfo.route_id == Route.id).all()
+
+# Route-Info list having route-id
+@bp.route("/routes-info/<int:route_id>", methods=['GET'])
+def get_routes_info(route_id):
+    routesInfo = RouteInfo.query.filter_by(route_id=route_id).all()
+    if not routesInfo:
+        return jsonify({
+            'message': 'Route info not found',
+            'status': 404,
+            'success': False
+        }), 404
+
     routes_info_list = []
     
     for routeInfo in routesInfo:
-        # query route-info source and destination
         source = routeInfo.source.name
         destination = routeInfo.destination.name
 
@@ -327,17 +333,11 @@ def get_routes_info():
             "distance": routeInfo.distance,
             "fare": routeInfo.fare
         }
-        
-        # # Add route-type data if available
-        # if routeInfo.route_type and routeInfo.route_type.type:
-        #     route_info_data["type"] = routeInfo.route_type.type
 
-        # query if route-info has route-type data and add to route-info-data
-        route_type = db.session.query(RouteType).filter_by(route_info_id=routesInfo.id).first()
+        route_type = db.session.query(RouteType).join(RouteInfo, RouteType.route_info_id == RouteInfo.id).filter(RouteInfo.id == routeInfo.id).first()
         if route_type and route_type.type:
             route_info_data["type"] = route_type.type
 
-        # append route-info-list with route-info-data
         routes_info_list.append(route_info_data)
     
     return jsonify({
@@ -345,6 +345,7 @@ def get_routes_info():
         'status': 200,
         'success': True
     }), 200
+
 
 
 
