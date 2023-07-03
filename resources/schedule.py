@@ -495,7 +495,7 @@ def create_schedule():
 # SCHEDULE model GET request API route
 @bp.route("/schedules", methods=["GET"])
 def get_schedules():
-    # query to join route_info and route to get all details of driver
+    # query to join route and schedule on route-id to fetch all route schedules
     schedules = Schedule.query.join(Route, Schedule.route_id == Route.id).all()
 
     schedules_list = []
@@ -513,14 +513,21 @@ def get_schedules():
         destination_halt = Halts.query.get(destination_id)
 
         schedules_list.append({
-            "id": schedule.id,
-            "departure-at": departure,
-            "arrival-at": arrival,
-            "duration": schedule.duration,
-            "source-id": source_id,
-            "source": source_halt.name,
-            'destination-id': destination_id,
-            "destination": destination_halt.name,
+            'id': schedule.id,
+            'departure-at': departure,
+            'arrival-at': arrival,
+            'duration': schedule.duration,
+            'route': {
+                'id': schedule.route_id,
+                'source': {
+                    'id': source_id,
+                    'source': source_halt.name,
+                },
+                'destination': {
+                    'destination-id': destination_id,
+                    'destination': destination_halt.name,
+                }
+            }
         })
     return jsonify({
             'success': True,
