@@ -521,11 +521,11 @@ def get_schedules():
                 'id': schedule.route_id,
                 'source': {
                     'id': source_id,
-                    'source': source_halt.name,
+                    'name': source_halt.name,
                 },
                 'destination': {
-                    'destination-id': destination_id,
-                    'destination': destination_halt.name,
+                    'id': destination_id,
+                    'name': destination_halt.name,
                 }
             }
         })
@@ -533,6 +533,56 @@ def get_schedules():
             'success': True,
             'result': schedules_list,
             'status': 200}), 200
+
+
+# API to get schedules for a given route
+@bp.route('/schedules/route/<int:route_id>', methods=['GET'])
+def route_schedules(route_id):
+    # Query schedules for the given route-id
+    schedules = Schedule.query.filter_by(route_id=route_id).all()
+
+    if not schedules:
+        return jsonify({
+            'success': False,
+            'status': 401,
+            'message': 'Schedules not found for given route'
+        }), 401
+    
+    schedules_list = []
+
+    for schedule in schedules:
+        # convert date
+        departure = schedule.departure_at.strftime('%H:%M')
+        arrival = schedule.arrival_at.strftime('%H:%M')
+
+        # source and destination
+        source_id = schedule.route.source_id
+        destination_id = schedule.route.destination_id
+
+        # Retrieve names of source and destination halts
+        source_halt = Halts.query.get(source_id)
+        destination_halt = Halts.query.get(destination_id)
+
+        schedules_list.append({
+            'id': schedule.id,
+            'departure-at': departure,
+            'arrival-at': arrival,
+            'duration': schedule.duration,
+            'source': {
+                'id': source_id,
+                'name': source_halt.name,
+            },
+            'destination': {
+                'id': destination_id,
+                'name': destination_halt.name,
+            }
+        })
+
+    return jsonify({
+        'succeed': True,
+        'result': schedules_list,
+        'status': 200
+    }), 200
 
 
 # SCHEDULE model DELETE request API route
