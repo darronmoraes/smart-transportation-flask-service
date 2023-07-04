@@ -16,6 +16,7 @@ from resources.schedule import bp as ScheduleBluprint
 from resources.bus import bp as BusBluprint
 from resources.booking import bp as BookingBluprint
 from resources.location import bp as LocationBluprint
+from resources.report import bp as ReportBluprint
 
 # import Pass model for scheduling
 from models.pass_model import Pass
@@ -61,6 +62,7 @@ app.register_blueprint(ScheduleBluprint)
 app.register_blueprint(BusBluprint)
 app.register_blueprint(BookingBluprint)
 app.register_blueprint(LocationBluprint)
+app.register_blueprint(ReportBluprint)
 
 
 
