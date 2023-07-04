@@ -47,6 +47,7 @@ def get_bus_report():
             'success': False
         }), 403
     
+    # Report response
     report = {
         'bus': {
             'id': bus.id,
@@ -56,6 +57,11 @@ def get_bus_report():
         'date': date,
         'schedules': []
     }
+    
+    # For storing ticket information
+    total_fare_amount = 0
+    total_tickets = 0
+    passenger_count = 0
 
     for bus_schedule in bus_schedules:
         # Query the associated schedule for each bus schedule
@@ -75,6 +81,13 @@ def get_bus_report():
         # Query the tickets for each bus schedule
         tickets = Ticket.query.filter_by(bus_schedule_id=bus_schedule.id).all()
 
+        # Iterate over tickets for calculations
+        for ticket in tickets:
+            total_fare_amount += ticket.total_fare_amount
+            total_tickets += 1
+            passenger_count += ticket.passenger_count
+
+        # Dictionary for the schedule
         schedule_data = {
             'id': schedule.id,
             'departure': schedule.departure_at.strftime('%Y-%m-%d'),
@@ -90,16 +103,20 @@ def get_bus_report():
                     'name': source_halt.name
                 }
             },
-            'tickets': [{
-                'id': ticket.id,
-                'fare-amount': ticket.total_fare_amount,
-                'distance': ticket.distance_travelled,
-                'passenger_count': ticket.passenger_count,
-                'status': ticket.status,
-            } for ticket in tickets]
+            'ticket': {
+                'total-fare-amount': total_fare_amount,
+                'total-tickets': total_tickets,
+                'passenger-count': passenger_count
+            }
         }
 
+        # Append schedules data to the report
         report['schedules'].append(schedule_data)
+
+        # Reset the calculation variables for the next schedule
+        total_fare_amount = 0
+        total_tickets = 0
+        passenger_count = 0
 
     return jsonify({
         'success': True,
