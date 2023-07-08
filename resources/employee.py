@@ -161,6 +161,50 @@ def add_passenger_details():
                         'driverId': driver.id}}), 200
 
 
+# Update driver employee details
+@bp.route("/update-driver/<int:employee_id>", methods=["PUT"])
+@auth_admin_middleware
+def update_driver_details(employee_id):
+    # Check if driver employee exists
+    employee = Employee.query.get(employee_id)
+    if not employee and employee.role != 'driver':
+        return jsonify({
+            'success': True,
+            'message': 'Driver employee not found',
+            'status': 400
+        }), 400
+    
+    # Get driver details
+    firstname = request.json.get("firstname")
+    lastname = request.json.get("lastname")
+    contact = request.json.get("contact")
+    gender = request.json.get("gender")
+
+    # Update driver details
+    if firstname:
+        employee.firstname = firstname
+    
+    # Update lastname if provided
+    if lastname:
+        employee.lastname = lastname
+
+    # Update contact if provided
+    if contact:
+        employee.contact = contact
+
+    # Update gender if provided
+    if gender:
+        employee.gender = gender
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Driver details updated successfully',
+        'status': 200
+    }), 200
+
+
 # Update employee details api request
 @bp.route("/update-employee/<int:employee_id>", methods=["PUT"])
 # @auth_admin_middleware
