@@ -492,6 +492,55 @@ def create_schedule():
                      'arrival-time': arrival,
                      'duration': new_schedule.duration,}}), 200
 
+
+# Schedule model PUT request to update schedule time
+@bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
+def update_schedule(schedule_id):
+    # filter through schedules and check if schedule exists already
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({
+            'success': False,
+            'message': 'Schedule not found',
+            'status': 400
+        }), 400
+    
+    # get departure and arrival time
+    departure_at_str = request.json.get('departure-at')
+    arrival_at_str = request.json.get('arrival-at')
+    duration = request.json.get('duration')
+
+    # Convert string time to time type
+    if departure_at_str:
+        departure_at = datetime.strptime(departure_at_str, '%H:%M').time()
+    else:
+        departure_at = None
+
+    if arrival_at_str:
+        arrival_at = datetime.strptime(arrival_at_str, '%H:%M').time()
+    else:
+        arrival_at = None
+
+    # Update schedule departure time if provided
+    if departure_at:
+        schedule.departure_at = departure_at
+
+    # Update schedule arrival time if provided
+    if arrival_at:
+        schedule.arrival_at = arrival_at
+
+    # Update duration
+    schedule.duration = duration
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Schedule updated successfully',
+        'status': 200
+    }), 200
+
+
 # SCHEDULE model GET request API route
 @bp.route("/schedules", methods=["GET"])
 def get_schedules():
