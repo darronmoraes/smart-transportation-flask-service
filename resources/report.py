@@ -123,3 +123,105 @@ def get_bus_report():
         'result': report,
         'status': 200
     }), 200
+
+
+# Report for bus on particular dates
+@bp.route('/bus-report/dates', methods=['GET'])
+def get_bus_report_on_dates():
+    bus_id = request.args.get('bus-id')
+    start_date = request.args.get('start-date')
+    end_date = request.args.get('end-date')
+
+    if not bus_id or not start_date or not end_date:
+        return jsonify({
+            'message': 'Invalid request. Please provide bus-id, start-date, and end-date',
+            'status': 401,
+            'success': False
+        }), 401
+    
+    # Query the bus information
+    bus = Bus.query.get(bus_id)
+
+    if not bus:
+        return jsonify({
+            'message': 'Bus not found',
+            'status': 402,
+            'success': False
+        }), 402
+    
+    # Query the schedules for the bus withing the date range
+    bus_schedules = BusSchedules.query.filter_by(bus_id=bus.id).filter(BusSchedules.date >= start_date, BusSchedules.date <= end_date).all()
+
+    if not bus_schedules:
+        return jsonify({
+            'message': 'No schedules found for the bus within the given date range',
+            'status': 403,
+            'success': False
+        }), 403
+    
+    # Report response
+    report = {
+        'bus': {
+            'id': bus.id,
+            'reg-no': bus.reg_no,
+            'type': bus.type
+        },
+        'start-date': start_date,
+        'end-date': end_date,
+        'schedules': []
+    }
+
+    for bus_schedule in bus_schedules:
+        # Query the associated schedule for each bus schedule
+        schedule =  bus_schedule.schedule
+
+        # Query the route for each schedule
+        route = schedule.route
+
+        # source and destination
+        source_id = route.source_id
+        destination_id = route.destination_id
+
+        # Retrieve names of source and destination halts
+        source_halt = Halts.query.get(source_id)
+        destination_halt = Halts.query.get(destination_id)
+
+        # Query the tickets for each bus schedule
+        tickets = Ticket.query.filter_by(bus_schedule_id=bus_schedule.id).all()
+
+        # Calculate ticket information
+        total_fare_amount = sum(ticket.total_fare_amount for ticket in tickets)
+        total_tickets = len(tickets)
+        passenger_count = sum(ticket.passenger_count for ticket in tickets)
+
+        # Dictionary for the schedule
+        schedule_data = {
+            'id': schedule.id,
+            'departure': schedule.departure_at.strftime('%Y-%m-%d'),
+            'arrival': schedule.departure_at.strftime('%Y-%m-%d'),
+            'route': {
+                'id': route.id,
+                'source': {
+                    'id': source_id,
+                    'name': source_halt.name
+                },
+                'destination': {
+                    'id': source_id,
+                    'name': source_halt.name
+                }
+            },
+            'ticket': {
+                'total-fare-amount': total_fare_amount,
+                'total-tickets': total_tickets,
+                'passenger-count': passenger_count
+            }
+        }
+
+        # Append schedules data to the report
+        report['schedules'].append(schedule_data)
+
+    return jsonify({
+        'success': True,
+        'result': report,
+        'status': 200
+    }), 200
