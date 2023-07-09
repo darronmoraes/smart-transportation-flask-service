@@ -94,7 +94,6 @@ def add_passenger_details():
     contact = request.json.get("contact")
     gender = request.json.get("gender")
     role = request.json.get("role")
-    employee_no = request.json.get("employeeNo")
 
     # required to populate user-driver-credentials
     email = request.json.get("email")
@@ -134,6 +133,12 @@ def add_passenger_details():
             'message': 'driver already registered',
             'status': 400}), 400
     
+    # Generate employee number
+    # company_initials
+    company_initials = "KTCL"
+
+    employee_no = Employee.generate_employee_number(company_initials)
+    
     
     if role == "driver":
         # create new user-employee-driver
@@ -145,7 +150,7 @@ def add_passenger_details():
         driver = Driver(license_no=license_no)
         db.session.add(driver)
         db.session.commit()
-        employee = Employee(firstname=firstname, lastname=lastname, contact=contact, gender=gender, role=role, employee_no= employee_no, user_id=new_driver_user.id, driver_id=driver.id)
+        employee = Employee(firstname=firstname, lastname=lastname, contact=contact, gender=gender, role=role, employee_no=employee_no, user_id=new_driver_user.id, driver_id=driver.id)
         db.session.add(employee)
         db.session.commit()
 
