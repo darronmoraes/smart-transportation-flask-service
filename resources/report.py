@@ -206,8 +206,8 @@ def get_bus_report_on_dates():
                     'name': source_halt.name
                 },
                 'destination': {
-                    'id': source_id,
-                    'name': source_halt.name
+                    'id': destination_id,
+                    'name': destination_halt.name
                 }
             },
             'ticket': {
