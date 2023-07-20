@@ -197,8 +197,8 @@ def get_bus_report_on_dates():
         # Dictionary for the schedule
         schedule_data = {
             'id': schedule.id,
-            'departure': schedule.departure_at.strftime('%Y-%m-%d'),
-            'arrival': schedule.departure_at.strftime('%Y-%m-%d'),
+            'departure': schedule.departure_at.strftime('%H:%M'),
+            'arrival': schedule.departure_at.strftime('%H:%M'),
             'route': {
                 'id': route.id,
                 'source': {
